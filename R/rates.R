@@ -35,7 +35,7 @@ stat_rate <- function(
   stratum_col_nms = NULL,
   adjust_col_nms = NULL,
   subset = NULL,
-  adjust_weigths = NULL,
+  adjust_weights = NULL,
   joint_column_level_space = NULL
 ) {
 

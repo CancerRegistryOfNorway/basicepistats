@@ -52,16 +52,37 @@ stat_count <- function(
   subset = NULL,
   joint_column_level_space = NULL
 ) {
+  easyassertions::assert_is_one_of(
+    stratum_col_nms,
+    fun_nms = c("assert_is_character_nonNA_vector", "assert_is_NULL")
+  )
+  easyassertions::assert_is_one_of(
+    joint_column_level_space,
+    fun_nms = c("assert_is_data_table", "assert_is_NULL")
+  )
+  if (is.null(stratum_col_nms)) {
+    stratum_col_nms <- character(0L)
+  }
+  easyassertions::assert_is_data_table_with_required_names(
+    x = x, required_names = stratum_col_nms
+  )
+  subset <- handle_subset_arg(dataset = x)
+
   if (is.null(joint_column_level_space) && !is.null(stratum_col_nms)) {
-    joint_column_level_space <- unique(x, by = stratum_col_nms)
+    joint_column_level_space <- unique(x, by = stratum_col_nms)[subset, ]
     data.table::setkeyv(joint_column_level_space, stratum_col_nms)
   }
+  if (data.table::is.data.table(joint_column_level_space)) {
+    easyassertions::assert_is_data_table(
+      x = joint_column_level_space
+    )
+    easyassertions::assert_has_only_names(
+      x = joint_column_level_space,
+      required_names = stratum_col_nms
+    )
+  }
 
-  expr <- quote(
-    x[
-      j = .N
-      ]
-  )
+  expr <- quote(x[j = .N])
   if (!is.null(subset)) {
     expr[["i"]] <- quote(subset)
   }

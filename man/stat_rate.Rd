@@ -10,7 +10,7 @@ stat_rate(
   stratum_col_nms = NULL,
   adjust_col_nms = NULL,
   subset = NULL,
-  adjust_weigths = NULL,
+  adjust_weights = NULL,
   joint_column_level_space = NULL
 )
 }
@@ -31,10 +31,10 @@ using `x`; see [basicepistats::offset_dt]}
 
 \item{subset}{passed to [basicepistats::stat_count]}
 
-\item{joint_column_level_space}{passed to [basicepistats::stat_count]}
-
 \item{adjust_weights}{passed to
 [directadjusting::directly_adjusted_estimates] argument `weights`}
+
+\item{joint_column_level_space}{passed to [basicepistats::stat_count]}
 }
 \description{
 Event rates table, optionally stratified and directly adjusted.
