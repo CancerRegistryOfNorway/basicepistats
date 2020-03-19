@@ -1,14 +1,15 @@
 Package: basicepistats
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Calculate Basic Epidemiological Statistics
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-Imports: data.table, directadjusting
-License: What license is it under?
+Authors@R: person("Joonas", "Miettinen", email = "joonas.miettinen@cancer.fi", role = c("aut", "cre"))
+Description: Includes functions for computing case counts, prevalence counts,
+  and other routine epidemiological statistics.
+Imports: data.table, directadjusting, easyassertions
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.0.2
-Remotes: WetRobot/directadjusting
+Remotes: WetRobot/directadjusting, WetRobot/easyassertions
+Suggests: 
+    testthat (>= 2.1.0)

@@ -2,6 +2,10 @@
 
 
 
+
+#' @title Rates
+#' @description
+#' Event rates table, optionally stratified and directly adjusted.
 #' @param x `[data.table]` (mandatory, no default)
 #'
 #' passed to [basicepistats::stat_count]
@@ -15,7 +19,7 @@
 #' @param subset passed to [basicepistats::stat_count]
 #' @param adjust_weights passed to
 #' [directadjusting::directly_adjusted_estimates] argument `weights`
-#' @param column_level_space passed to [basicepistats::stat_count]
+#' @param joint_column_level_space passed to [basicepistats::stat_count]
 #'
 #' @examples
 #' library("data.table")
@@ -24,6 +28,7 @@
 #'   agegroup = 1:18
 #' )
 #' offset_dt[, "offset" := rpois(.N, lambda = 15000)]
+#' @export
 stat_rate <- function(
   x,
   offset_dt,
@@ -31,7 +36,7 @@ stat_rate <- function(
   adjust_col_nms = NULL,
   subset = NULL,
   adjust_weigths = NULL,
-  column_level_space = NULL
+  joint_column_level_space = NULL
 ) {
 
 }
