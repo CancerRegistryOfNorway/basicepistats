@@ -15,26 +15,26 @@ stat_rate(
 )
 }
 \arguments{
-\item{x}{`[data.table]` (mandatory, no default)
+\item{x}{\verb{[data.table]} (mandatory, no default)
 
-passed to [basicepistats::stat_count]}
+passed to \link[basicepistats:stat_count]{basicepistats::stat_count}}
 
-\item{offset_dt}{`[data.table]` (mandatory, no default)
+\item{offset_dt}{\verb{[data.table]} (mandatory, no default)
 
 contains offsets (typically mean population sizes) for the counts produced
-using `x`; see [basicepistats::offset_dt]}
+using \code{x}; see \link[basicepistats:offset_dt]{basicepistats::offset_dt}}
 
 \item{stratum_col_nms}{output will be stratified by these columns}
 
 \item{adjust_col_nms}{output will be adjusted by these columns; see
-[directadjusting::directly_adjusted_estimates]}
+\link[directadjusting:directly_adjusted_estimates]{directadjusting::directly_adjusted_estimates}}
 
-\item{subset}{passed to [basicepistats::stat_count]}
+\item{subset}{passed to \link[basicepistats:stat_count]{basicepistats::stat_count}}
 
 \item{adjust_weights}{passed to
-[directadjusting::directly_adjusted_estimates] argument `weights`}
+\link[directadjusting:directly_adjusted_estimates]{directadjusting::directly_adjusted_estimates} argument \code{weights}}
 
-\item{joint_column_level_space}{passed to [basicepistats::stat_count]}
+\item{joint_column_level_space}{passed to \link[basicepistats:stat_count]{basicepistats::stat_count}}
 }
 \description{
 Event rates table, optionally stratified and directly adjusted.

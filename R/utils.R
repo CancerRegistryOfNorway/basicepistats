@@ -3,6 +3,66 @@
 
 
 
+#' level_list <- list(
+#'   sex = 1:2,
+#'   area = 1:5
+#' )
+#' level_space_list_to_level_space_data_table(level_list)
+#'
+#' level_list <- list(
+#'   sex = 1:2,
+#'   area = data.table::data.table(a1 = c(1, 1, 1, 2, 2), a2 = c(1, 2, 3, 1, 2))
+#' )
+#' level_space_list_to_level_space_data_table(level_list)
+#'
+#' level_list <- list(
+#'   type = data.table::data.table(t1 = c(1,1,2,2), t2 = c(1,2,3,4)),
+#'   area = data.table::data.table(a1 = c(1,1,1,2,2), a2 = c(1,2,3,1,2))
+#' )
+#' level_space_list_to_level_space_data_table(level_list)
+#' @importFrom data.table is.data.table CJ set setkeyv
+level_space_list_to_level_space_data_table <- function(
+  x
+) {
+  easyassertions::assert_is_list(x)
+  easyassertions::assert_is_uniquely_named(x)
+  stopifnot(
+    vapply(x,
+           function(elem) {is.vector(x) || data.table::is.data.table(x)},
+           logical(1L))
+  )
+
+  contains_dt <- vapply(x, data.table::is.data.table, logical(1L))
+  dt <- do.call(data.table::CJ, lapply(seq_along(x), function(i) {
+    if (contains_dt[i]) {
+      1:nrow(x[[i]])
+    } else {
+      seq_along(x[[i]])
+    }
+  }))
+  pos_col_nms <- paste0("_____", names(dt), "_pos")
+  names(pos_col_nms) <- names(x)
+  data.table::setnames(dt, names(dt), pos_col_nms)
+  lapply(seq_along(x), function(i) {
+    pos_col_nm <- pos_col_nms[i]
+    x_i_is_dt <- contains_dt[i]
+    x_i <- x[[i]]
+    value_col_nms <- if (x_i_is_dt) names(x_i) else names(x)[i]
+    pos_vec <- dt[[pos_col_nm]]
+    data.table::set(
+      x = dt,
+      j = value_col_nms,
+      value = if (x_i_is_dt) x_i[pos_vec, ] else x_i[pos_vec]
+    )
+    NULL
+  })
+  data.table::set(x = dt, j = pos_col_nms, value = NULL)
+  data.table::setkeyv(dt, names(dt))
+  return(dt[])
+}
+
+
+
 #' @importFrom data.table is.data.table set
 enforce_level_space <- function(
   x,
@@ -40,13 +100,6 @@ enforce_level_space <- function(
   x[]
 }
 
-
-
-
-
-tf <- function(x, subset_1) {
-  handle_subset_arg(subset_arg_nm = "subset_1", dataset = x)
-}
 
 
 
@@ -117,7 +170,7 @@ handle_subset_arg <- function(
 
   if (is.data.frame(dataset) && !is.null(subset_value)) {
     if (is.logical(subset_value)) {
-      if (!length(subset_value) %in% c(1L, nrow(dataset))) {
+      if (!length(subset_value) %in% nrow(dataset)) {
         stop("dataset has ", nrow(dataset), " rows but logical subset is of ",
              "length ", length(subset_value))
       }
