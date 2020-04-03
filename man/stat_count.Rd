@@ -4,26 +4,12 @@
 \alias{stat_count}
 \title{Counts}
 \usage{
-stat_count(
-  x,
-  stratum_col_nms = NULL,
-  subset = NULL,
-  subset_style = c("zeros", "drop")[1],
-  joint_column_level_space = NULL
-)
+stat_count(x, by = NULL, subset = NULL, subset_style = c("zeros", "drop")[1])
 }
 \arguments{
 \item{x}{\verb{[data.table]} (mandatory, no default)
 
 compute counts in this dataset}
-
-\item{stratum_col_nms}{\verb{[NULL, character]} (optional, default \code{NULL})
-\itemize{
-\item \code{NULL}: produces total counts in \code{x}, unless \code{joint_column_level_space}
-is not \code{NULL}; then \code{names(joint_column_level_space)} is used and
-counts are produced by each of these stratifying column
-\item \code{character}: produces counts stratified by these columns
-}}
 
 \item{subset}{\verb{[NULL, integer, logical]} (optional, default \code{NULL})
 \itemize{
@@ -45,17 +31,25 @@ will have zero counts
 (zero counts are impossible)
 }}
 
+\item{stratum_col_nms}{\verb{[NULL, character]} (optional, default \code{NULL})
+\itemize{
+\item \code{NULL}: produces total counts in \code{x}, unless \code{joint_column_level_space}
+is not \code{NULL}; then \code{names(joint_column_level_space)} is used and
+counts are produced by each of these stratifying column
+\item \code{character}: produces counts stratified by these columns
+}}
+
 \item{joint_column_level_space}{\verb{[NULL, data.table, list]} (optional, default \code{NULL})
 \itemize{
 \item \code{NULL}: counts are produced using the levels observed in the
 dataset; see \code{subset_style} for the effect of subsetting
 \item \code{data.table}: describes the stratum column levels and the relationships
 between stratum columns; must have a column for all \code{stratum_col_nms}
-unless \code{stratum_col_nms} is \code{NULL}; see \strong{Examples}
+unless \code{stratum_col_nms} is \code{NULL}
 \item \code{list}: a named \code{list}, where each name must be a name of a column in \code{x};
 each element of the \code{list} contains the set of levels for the correspoding
 column; the \code{list} is turned into a \code{data.table} and that is used as if
-you had supplied a \code{data.table}; see \strong{Examples}
+you had supplied a \code{data.table}
 }}
 }
 \description{
@@ -78,17 +72,14 @@ my_dataset <- data.table::data.table(
 
 stat_count(
   x = my_dataset,
-  stratum_col_nms = c("sex", "area_1", "area_2"),
-  joint_column_level_space = sls
+  by = sls
 )
 stat_count(
   x = my_dataset,
-  stratum_col_nms = c("sex", "area_1", "area_2"),
-  joint_column_level_space = list(sex = 1:2, area_1 = 1:2)
+  by = list(sex = 1:2, area_1 = 1:2)
 )
 stat_count(
   x = my_dataset,
-  stratum_col_nms = c("sex", "area_1", "area_2"),
-  joint_column_level_space = list(sex = 1:2, area = area_sls)
+  by = list(sex = 1:2, area = area_sls)
 )
 }

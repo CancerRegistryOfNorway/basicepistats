@@ -6,13 +6,13 @@
 \usage{
 stat_prevalent_subject_count(
   x,
-  subject_id_col_nm,
   follow_up_time_col_nm,
-  follow_up_time_window_widths,
-  stratum_col_nms = NULL,
+  follow_up_time_window_widths = Inf,
+  subject_id_col_nm = NULL,
+  by = NULL,
   subset = NULL,
   subset_style = "zero",
-  joint_column_level_space = NULL
+  observation_time_points
 )
 }
 \arguments{
@@ -20,32 +20,24 @@ stat_prevalent_subject_count(
 
 dataset containing one or more records by subject}
 
-\item{subject_id_col_nm}{\verb{[character, NULL]} (optional, default \code{NULL})
-
--\code{character}: name of column in \code{x} which identifies subjects; one subject
-may have one or more rows in \code{x}
--\code{NULL}: \code{subject_id_col_nm} is created on-the-fly with the assumption
-that each record in \code{x} is a subject}
-
 \item{follow_up_time_col_nm}{\verb{[character]} (mandatory, no default)
 
 name of column in \code{x} which specifies values in the time scale in which
 prevalence follow-up windows are determined (e.g. prevalence of subjects
 with event within 1, 5, 10 years)}
 
-\item{follow_up_time_window_widths}{\verb{[numeric]} (mandatory, no default)
+\item{follow_up_time_window_widths}{\verb{[numeric]} (mandatory, default \code{Inf})
 
 widhts of windowss in time scale given in \code{follow_up_time_col_nm};
 e.g. \code{c(1, 5, 10, Inf)} for windows of width 1, 5, 10 and window containing
 all subjects}
 
-\item{stratum_col_nms}{\verb{[character, NULL]} (optional, default \code{NULL})
+\item{subject_id_col_nm}{\verb{[character, NULL]} (optional, default \code{NULL})
 
-passed to \link{stat_count}.
-\itemize{
-\item \code{character}: prevalence counts are stratified by these stratifying columns
-\item \code{NULL}: no stratification
-}}
+-\code{character}: name of column in \code{x} which identifies subjects; one subject
+may have one or more rows in \code{x}
+-\code{NULL}: \code{subject_id_col_nm} is created on-the-fly with the assumption
+that each record in \code{x} is a subject}
 
 \item{subset}{\verb{[NULL, integer, logical]} (optional, default \code{NULL})
 \itemize{
@@ -73,11 +65,19 @@ will have zero counts
 dataset; see \code{subset_style} for the effect of subsetting
 \item \code{data.table}: describes the stratum column levels and the relationships
 between stratum columns; must have a column for all \code{stratum_col_nms}
-unless \code{stratum_col_nms} is \code{NULL}; see \strong{Examples}
+unless \code{stratum_col_nms} is \code{NULL}
 \item \code{list}: a named \code{list}, where each name must be a name of a column in \code{x};
 each element of the \code{list} contains the set of levels for the correspoding
 column; the \code{list} is turned into a \code{data.table} and that is used as if
-you had supplied a \code{data.table}; see \strong{Examples}
+you had supplied a \code{data.table}
+}}
+
+\item{stratum_col_nms}{\verb{[character, NULL]} (optional, default \code{NULL})
+
+passed to \link{stat_count}.
+\itemize{
+\item \code{character}: prevalence counts are stratified by these stratifying columns
+\item \code{NULL}: no stratification
 }}
 }
 \description{

@@ -10,6 +10,7 @@
 #' @param x `[data.table]` (mandatory, no default)
 #'
 #' dataset containing one or more records by subject
+#' @template arg_by
 #' @param subject_id_col_nm `[character, NULL]` (optional, default `NULL`)
 #'
 #' -`character`: name of column in `x` which identifies subjects; one subject
@@ -21,7 +22,7 @@
 #' name of column in `x` which specifies values in the time scale in which
 #' prevalence follow-up windows are determined (e.g. prevalence of subjects
 #' with event within 1, 5, 10 years)
-#' @param follow_up_time_window_widths `[numeric]` (mandatory, no default)
+#' @param follow_up_time_window_widths `[numeric]` (mandatory, default `Inf`)
 #'
 #' widhts of windowss in time scale given in `follow_up_time_col_nm`;
 #' e.g. `c(1, 5, 10, Inf)` for windows of width 1, 5, 10 and window containing
@@ -33,33 +34,71 @@
 #' - `NULL`: no stratification
 #' @template arg_subset
 #' @template arg_subset_style
-#' @template arg_joint_column_level_space
 stat_prevalent_subject_count <- function(
   x,
-  subject_id_col_nm,
   follow_up_time_col_nm,
-  follow_up_time_window_widths,
-  stratum_col_nms = NULL,
+  follow_up_time_window_widths = Inf,
+  subject_id_col_nm = NULL,
+  by = NULL,
   subset = NULL,
   subset_style = "zero",
-  joint_column_level_space = NULL
+  observation_time_points
 ) {
   # split x at prevalence_time_points and count number of subjects identified
   # by subject_id_col_nm
+
+  dt <- data.table::setDT(mget(names(x), as.environment(x)))
+  data.table::setattr(x, "class", c("Lexis", "data.table", "data.frame"))
+  data.table::setattr(x, "time.scales", c(follow_up_time_col_nm, names(observation_time_points)))
+
+  dt <- popEpi::splitMulti(
+    data = dt,
+    breaks = observation_time_points,
+  )
+  subset <- handle_subset_arg(dataset = x)
+  by <- handle_by_arg(dataset = dt, subset = subset, by = by)
+
+  fut_window_breaks <- sort(union(0, follow_up_time_window_widths))
+  fut_window_labels <- paste0(
+    "[", fut_window_breaks[-length(fut_window_breaks)],
+    ", ",
+    fut_window_breaks[-1],
+    ")"
+  )
+  data.table::set(
+    dt,
+    j = ".__fut_window",
+    value = cut(
+      x = dt[[follow_up_time_col_nm]],
+      breaks = fut_window_breaks,
+      labels = fut_window_labels,
+      right = FALSE
+    )
+  )
+  by <- list(
+    by = by,
+    fut_window = factor(seq_along(fut_window_labels),
+                        labels = fut_window_labels)
+  )
+  by <- level_space_list_to_level_space_data_table(by)
+  count_dt <- stat_count(
+    x = dt, by = by, subset = subset, subset_style = subset_style
+  )
+
+  return(count_dt[])
 }
 
 stat_prevalence <- function(
   x,
-  subject_id_col_nm,
-  prevalence_time_scale_col_nm,
-  prevalence_time_points,
-  prevalence_window_widths,
-  offset_dt,
-  stratum_col_nms = NULL,
-  adjust_col_nms = NULL,
+  follow_up_time_col_nm,
+  follow_up_time_window_widths = Inf,
+  subject_id_col_nm = NULL,
+  by = NULL,
   subset = NULL,
-  adjust_weigths = NULL,
-  joint_column_level_space = NULL
+  subset_style = "zero",
+  adjust_col_nms = NULL,
+  adjust_weights = NULL,
+  genpop = NULL
 ) {
   # use stat_prevalent_subject_count and then use stat_rate
 }

@@ -17,7 +17,7 @@
 #' - `character`: produces counts stratified by these columns
 #' @template arg_subset
 #' @template arg_subset_style
-#' @template arg_joint_column_level_space
+#' @template arg_by
 #' @examples
 #' library("data.table")
 #' sls <- data.table::CJ(sex = 1:2, area_2 = 1:5)
@@ -35,73 +35,55 @@
 #'
 #' stat_count(
 #'   x = my_dataset,
-#'   stratum_col_nms = c("sex", "area_1", "area_2"),
-#'   joint_column_level_space = sls
+#'   by = sls
 #' )
 #' stat_count(
 #'   x = my_dataset,
-#'   stratum_col_nms = c("sex", "area_1", "area_2"),
-#'   joint_column_level_space = list(sex = 1:2, area_1 = 1:2)
+#'   by = list(sex = 1:2, area_1 = 1:2)
 #' )
 #' stat_count(
 #'   x = my_dataset,
-#'   stratum_col_nms = c("sex", "area_1", "area_2"),
-#'   joint_column_level_space = list(sex = 1:2, area = area_sls)
+#'   by = list(sex = 1:2, area = area_sls)
 #' )
 #' @importFrom data.table setkeyv .N :=
 #' @export
 stat_count <- function(
   x,
-  stratum_col_nms = NULL,
+  by = NULL,
   subset = NULL,
-  subset_style = c("zeros", "drop")[1],
-  joint_column_level_space = NULL
+  subset_style = c("zeros", "drop")[1]
 ) {
+  easyassertions::assert_is_data_table(x)
   easyassertions::assert_is_one_of(
-    stratum_col_nms,
-    fun_nms = c("assert_is_character_nonNA_vector", "assert_is_NULL")
+    by,
+    fun_nms = c("assert_is_data_table", "assert_is_character_nonNA_vector",
+                "assert_is_list", "assert_is_NULL")
   )
+  subset <- handle_subset_arg(dataset = x)
   easyassertions::assert_atom_is_in_set(
     x = subset_style,
     x_nm = "subset_style",
     set = c("zeros", "drop")
   )
-  easyassertions::assert_is_one_of(
-    joint_column_level_space,
-    fun_nms = c("assert_is_data_table", "assert_is_list", "assert_is_NULL")
-  )
-  if (is.null(stratum_col_nms)) {
-    stratum_col_nms <- character(0L)
-    if (!is.null(joint_column_level_space)) {
-      stratum_col_nms <- names(joint_column_level_space)
+  if (data.table::is.data.table(by)) {
+    stratum_col_nms <- names(by)
+  } else if (inherits(by, "list")) {
+    by <- level_space_list_to_level_space_data_table(by)
+    stratum_col_nms <- names(by)
+  } else if (is.character(by)) {
+    stratum_col_nms <- by
+    by_expr <- quote(
+      unique(x[j = .SD, .SDcols = stratum_col_nms], by = stratum_col_nms)
+    )
+    if (!is.null(subset)) {
+      by_expr[["i"]] <- quote(subset)
     }
+    by <- eval(by_expr)
+    data.table::setkeyv(by, stratum_col_nms)
   }
   easyassertions::assert_is_data_table_with_required_names(
     x = x, required_names = stratum_col_nms
   )
-  subset <- handle_subset_arg(dataset = x)
-
-  if (data.table::is.data.table(joint_column_level_space)) {
-    easyassertions::assert_has_only_names(
-      x = joint_column_level_space,
-      required_names = stratum_col_nms
-    )
-  } else if (inherits(joint_column_level_space, "list")) {
-    joint_column_level_space <- level_space_list_to_level_space_data_table(
-      joint_column_level_space
-    )
-    easyassertions::assert_has_only_names(
-      x = joint_column_level_space,
-      x_nm = paste0(
-        "joint_column_level_space data.table produced from list-type ",
-        "joint_column_level_space"
-      ),
-      required_names = stratum_col_nms
-    )
-  } else if (is.null(joint_column_level_space) && !is.null(stratum_col_nms)) {
-    joint_column_level_space <- unique(x, by = stratum_col_nms)[subset, ]
-    data.table::setkeyv(joint_column_level_space, stratum_col_nms)
-  }
 
   expr <- quote(x[j = .N])
   if (!is.null(subset)) {
@@ -112,14 +94,14 @@ stat_count <- function(
   }
   count_dt <- eval(expr)
 
-  if (data.table::is.data.table(joint_column_level_space)) {
+  if (data.table::is.data.table(by)) {
     if (subset_style == "drop") {
-      expr <- quote(x[j = .SD, .SDcols = names(joint_column_level_space)])
+      expr <- quote(x[j = .SD, .SDcols = names(by)])
       if (!is.null(subset)) {
         expr[["i"]] <- quote(subset)
       }
-      sub_space <- unique(eval(expr), by = names(joint_column_level_space))
-      joint_column_level_space <- joint_column_level_space[
+      sub_space <- unique(eval(expr), by = names(by))
+      by <- by[
         i = sub_space,
         on = names(sub_space)
       ]
@@ -128,7 +110,7 @@ stat_count <- function(
       x = count_dt,
       value_col_nms = "N",
       fill = 0L,
-      joint_column_level_space = joint_column_level_space
+      joint_column_level_space = by
     )
   }
 
