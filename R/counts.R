@@ -9,12 +9,6 @@
 #' @param x `[data.table]` (mandatory, no default)
 #'
 #' compute counts in this dataset
-#' @param stratum_col_nms `[NULL, character]` (optional, default `NULL`)
-#'
-#' - `NULL`: produces total counts in `x`, unless `joint_column_level_space`
-#'   is not `NULL`; then `names(joint_column_level_space)` is used and
-#'   counts are produced by each of these stratifying column
-#' - `character`: produces counts stratified by these columns
 #' @template arg_subset
 #' @template arg_subset_style
 #' @template arg_by
@@ -45,7 +39,12 @@
 #'   x = my_dataset,
 #'   by = list(sex = 1:2, area = area_sls)
 #' )
-#' @importFrom data.table setkeyv .N :=
+#' @name counts
+NULL
+
+#' @rdname counts
+#' @details
+#' - `stat_count` produces the number of records by strata.
 #' @export
 stat_count <- function(
   x,
@@ -53,71 +52,89 @@ stat_count <- function(
   subset = NULL,
   subset_style = c("zeros", "drop")[1]
 ) {
-  easyassertions::assert_is_data_table(x)
-  easyassertions::assert_is_one_of(
-    by,
-    fun_nms = c("assert_is_data_table", "assert_is_character_nonNA_vector",
-                "assert_is_list", "assert_is_NULL")
+  stat_expr(
+    x = x,
+    expr = quote(.N),
+    by = by,
+    subset = subset,
+    subset_style = subset_style
   )
+}
+
+
+#' @rdname counts
+#' @param unique_by `[character]` (mandatory, no default)
+#'
+#' names of columns in `x`; unique combinations of these columns are counted;
+#' e.g. `unique_by = "my_subject_id"` to count numbers of subjects by strata
+#' @details
+#' - `stat_unique_count` produces the number of unique combinations of columns
+#'   defined in `unique_by`; e.g. the number of unique subjects by strata.
+#' @export
+stat_unique_count <- function(
+  x,
+  unique_by,
+  by = NULL,
+  subset = NULL,
+  subset_style = c("zeros", "drop")[1]
+) {
+  easyassertions::assert_is_character_nonNA_vector(unique_by)
+  easyassertions::assert_is_data.table_with_required_names(
+    x,
+    required_names = unique_by
+  )
+  stat_expr(
+    x = x,
+    expr = substitute(uniqueN(.SD, by = UB), list(UB = unique_by)),
+    by = by,
+    subset = subset,
+    subset_style = subset_style
+  )
+}
+
+
+#' @importFrom data.table setkeyv .N := is.data.table
+#' @importFrom easyassertions assert_is_data_table assert_atom_is_in_set
+stat_expr <- function(
+  x,
+  expr = quote(.N),
+  by = NULL,
+  subset = NULL,
+  subset_style = "zeros"
+) {
+  easyassertions::assert_is_data_table(x)
   subset <- handle_subset_arg(dataset = x)
   easyassertions::assert_atom_is_in_set(
     x = subset_style,
     x_nm = "subset_style",
     set = c("zeros", "drop")
   )
-  if (data.table::is.data.table(by)) {
-    stratum_col_nms <- names(by)
-  } else if (inherits(by, "list")) {
-    by <- level_space_list_to_level_space_data_table(by)
-    stratum_col_nms <- names(by)
-  } else if (is.character(by)) {
-    stratum_col_nms <- by
-    by_expr <- quote(
-      unique(x[j = .SD, .SDcols = stratum_col_nms], by = stratum_col_nms)
-    )
-    if (!is.null(subset)) {
-      by_expr[["i"]] <- quote(subset)
-    }
-    by <- eval(by_expr)
-    data.table::setkeyv(by, stratum_col_nms)
-  }
-  easyassertions::assert_is_data_table_with_required_names(
-    x = x, required_names = stratum_col_nms
+  by <- handle_by_arg(
+    by = by,
+    dataset = x,
+    subset = subset,
+    subset_style = subset_style
   )
+  stratum_col_nms <- names(by)
 
-  expr <- quote(x[j = .N])
+  x_expr <- quote(x[])
+  x_expr[["j"]] <- expr
   if (!is.null(subset)) {
-    expr[["i"]] <- quote(subset)
+    x_expr[["i"]] <- quote(subset)
   }
   if (!is.null(stratum_col_nms)) {
-    expr[["keyby"]] <- stratum_col_nms
+    x_expr[["keyby"]] <- stratum_col_nms
   }
-  count_dt <- eval(expr)
+  count_dt <- eval(x_expr)
 
-  if (data.table::is.data.table(by)) {
-    if (subset_style == "drop") {
-      expr <- quote(x[j = .SD, .SDcols = names(by)])
-      if (!is.null(subset)) {
-        expr[["i"]] <- quote(subset)
-      }
-      sub_space <- unique(eval(expr), by = names(by))
-      by <- by[
-        i = sub_space,
-        on = names(sub_space)
-      ]
-    }
-    count_dt <- enforce_level_space(
-      x = count_dt,
-      value_col_nms = "N",
-      fill = 0L,
-      joint_column_level_space = by
-    )
-  }
-
+  count_dt <- enforce_level_space(
+    x = count_dt,
+    value_col_nms = "N",
+    fill = 0L,
+    joint_column_level_space = by
+  )
   return(count_dt[])
 }
-
-
 
 
 

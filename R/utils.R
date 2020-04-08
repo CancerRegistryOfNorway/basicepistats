@@ -186,6 +186,52 @@ handle_subset_arg <- function(
 
 
 
+#' @importFrom data.table is.data.table .SD setkeyv
+#' @importFrom easyassertions assert_is_one_of
+#' assert_is_data_table_with_required_names
+handle_by_arg <- function(by, dataset, subset, subset_style) {
+  # returns a data.table usually but NULL if by = NULL.
+  easyassertions::assert_is_one_of(
+    by,
+    fun_nms = c("assert_is_data_table", "assert_is_character_nonNA_vector",
+                "assert_is_list", "assert_is_NULL")
+  )
+  if (data.table::is.data.table(by)) {
+    easyassertions::assert_is_data_table_with_required_names(
+      x = dataset, required_names = names(by)
+    )
+  } else if (inherits(by, "list")) {
+    by <- level_space_list_to_level_space_data_table(by)
+    easyassertions::assert_is_data_table_with_required_names(
+      x = dataset, required_names = names(by)
+    )
+  } else if (is.character(by)) {
+    stratum_col_nms <- by
+    by_expr <- quote(
+      unique(dataset[j = .SD, .SDcols = stratum_col_nms], by = stratum_col_nms)
+    )
+    if (!is.null(subset)) {
+      by_expr[["i"]] <- quote(subset)
+    }
+    by <- eval(by_expr)
+    data.table::setkeyv(by, stratum_col_nms)
+  }
+
+  if (data.table::is.data.table(by)) {
+    if (subset_style == "drop") {
+      expr <- quote(dataset[j = .SD, .SDcols = names(by)])
+      if (!is.null(subset)) {
+        expr[["i"]] <- quote(subset)
+      }
+      sub_space <- unique(eval(expr), by = names(by))
+      by <- by[
+        i = sub_space,
+        on = names(sub_space)
+        ]
+    }
+  }
+  return(by)
+}
 
 
 
