@@ -68,11 +68,11 @@ will have zero counts
 
 a named list, where the names correspond to time scales in \code{x} and the
 elements are points in the time scale where prevalence counts are intended
-to be observed; e.g. \code{list(calendar_time = as.Date("1999-12-31"))} observes
+to be observed; e.g. \code{list(date = as.Date("1999-12-31"))} observes
 prevalences on the last day of 1999. multiple time scales can be supplied,
 whereupon prevalences are observed along the different time scales
 independently of each other, e.g.
-\code{list(calendar_time = as.Date("1999-12-31"), age = 60 * 365.25)}
+\code{list(date = as.Date("1999-12-31"), age = 60 * 365.25)}
 observes prevalence at the end of 1999 and separately at the 60th birthday
 and NOT instances that turned 60 at the end of 1999.}
 

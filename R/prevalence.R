@@ -36,11 +36,11 @@
 #'
 #' a named list, where the names correspond to time scales in `x` and the
 #' elements are points in the time scale where prevalence counts are intended
-#' to be observed; e.g. `list(calendar_time = as.Date("1999-12-31"))` observes
+#' to be observed; e.g. `list(date = as.Date("1999-12-31"))` observes
 #' prevalences on the last day of 1999. multiple time scales can be supplied,
 #' whereupon prevalences are observed along the different time scales
 #' independently of each other, e.g.
-#' `list(calendar_time = as.Date("1999-12-31"), age = 60 * 365.25)`
+#' `list(date = as.Date("1999-12-31"), age = 60 * 365.25)`
 #' observes prevalence at the end of 1999 and separately at the 60th birthday
 #' and NOT instances that turned 60 at the end of 1999.
 #' @name prevalence
