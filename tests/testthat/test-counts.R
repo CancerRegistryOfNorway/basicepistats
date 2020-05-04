@@ -18,8 +18,8 @@ test_that("stat_counts works", {
   )
 
   count_dt <- stat_count(
-    my_dataset, c("sex", "area_1", "area_2"),
-    joint_column_level_space = sls
+    x = my_dataset,
+    by = sls
   )
 
   testthat::expect_equivalent(

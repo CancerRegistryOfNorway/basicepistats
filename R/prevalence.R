@@ -25,11 +25,6 @@
 #' widhts of windowss in time scale given in `follow_up_time_col_nm`;
 #' e.g. `c(1, 5, 10, Inf)` for windows of width 1, 5, 10 and window containing
 #' all subjects
-#' @param stratum_col_nms `[character, NULL]` (optional, default `NULL`)
-#'
-#' passed to [stat_count].
-#' - `character`: prevalence counts are stratified by these stratifying columns
-#' - `NULL`: no stratification
 #' @template arg_subset
 #' @template arg_subset_style
 #' @param observation_time_points `[list]` (mandatory, no default)
@@ -82,6 +77,11 @@ stat_prevalent_record_count <- function(
 }
 
 
+#' @importFrom popEpi splitMulti
+#' @importFrom data.table setDT setattr := .N .SD set setkeyv
+#' @importFrom easyassertions assert_is_character_nonNA_atom
+#' assert_is_number_nonNA_vector assert_is_data_table_with_required_names
+#' assert_is_one_of
 stat_prevalence_count <- function(
   x,
   follow_up_time_col_nm,
@@ -96,7 +96,7 @@ stat_prevalence_count <- function(
   easyassertions::assert_is_character_nonNA_atom(follow_up_time_col_nm)
   easyassertions::assert_is_number_nonNA_vector(follow_up_time_window_widths)
   time_scale_names <- c(follow_up_time_col_nm, names(observation_time_points))
-  easyassertions::assert_is_data.table_with_required_names(
+  easyassertions::assert_is_data_table_with_required_names(
     x,
     required_names = time_scale_names
   )
@@ -147,7 +147,11 @@ stat_prevalence_count <- function(
   } else {
     subset <- is_at_an_observation_point
   }
-  by <- handle_by_arg(dataset = dt, subset = subset, by = by)
+
+  by <- handle_by_arg(dataset = dt,
+                      by = by,
+                      subset = subset,
+                      subset_style = subset_style)
   dt <- dt[subset, ]
 
   # create follow-up time windows ----------------------------------------------
@@ -183,6 +187,7 @@ stat_prevalence_count <- function(
 
   stratum_col_nms <- setdiff(names(count_dt), "N")
   data.table::setkeyv(count_dt, stratum_col_nms)
+  N <- NULL # to appease R CMD CHECK
   count_dt[
     j = "N" := cumsum(N),
     by = eval(setdiff(stratum_col_nms, ".__fut_window"))
@@ -227,7 +232,7 @@ stat_prevalent_subject_count <- function(
   observation_time_points
 ) {
   easyassertions::assert_is_character_nonNA_atom(subject_id_col_nm)
-  easyassertions::assert_is_data.table_with_required_names(
+  easyassertions::assert_is_data_table_with_required_names(
     x,
     required_names = subject_id_col_nm
   )

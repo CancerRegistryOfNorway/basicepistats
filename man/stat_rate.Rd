@@ -22,7 +22,7 @@ passed to \link[basicepistats:stat_count]{basicepistats::stat_count}}
 \item{offset_dt}{\verb{[data.table]} (mandatory, no default)
 
 contains offsets (typically mean population sizes) for the counts produced
-using \code{x}; see \link[basicepistats:offset_dt]{basicepistats::offset_dt}}
+using \code{x}}
 
 \item{stratum_col_nms}{output will be stratified by these columns}
 

@@ -3,23 +3,23 @@
 
 
 
-#' level_list <- list(
-#'   sex = 1:2,
-#'   area = 1:5
-#' )
-#' level_space_list_to_level_space_data_table(level_list)
-#'
-#' level_list <- list(
-#'   sex = 1:2,
-#'   area = data.table::data.table(a1 = c(1, 1, 1, 2, 2), a2 = c(1, 2, 3, 1, 2))
-#' )
-#' level_space_list_to_level_space_data_table(level_list)
-#'
-#' level_list <- list(
-#'   type = data.table::data.table(t1 = c(1,1,2,2), t2 = c(1,2,3,4)),
-#'   area = data.table::data.table(a1 = c(1,1,1,2,2), a2 = c(1,2,3,1,2))
-#' )
-#' level_space_list_to_level_space_data_table(level_list)
+# level_list <- list(
+#   sex = 1:2,
+#   area = 1:5
+# )
+# level_space_list_to_level_space_data_table(level_list)
+#
+# level_list <- list(
+#   sex = 1:2,
+#   area = data.table::data.table(a1 = c(1, 1, 1, 2, 2), a2 = c(1, 2, 3, 1, 2))
+# )
+# level_space_list_to_level_space_data_table(level_list)
+#
+# level_list <- list(
+#   type = data.table::data.table(t1 = c(1,1,2,2), t2 = c(1,2,3,4)),
+#   area = data.table::data.table(a1 = c(1,1,1,2,2), a2 = c(1,2,3,1,2))
+# )
+# level_space_list_to_level_space_data_table(level_list)
 #' @importFrom data.table is.data.table CJ set setkeyv
 level_space_list_to_level_space_data_table <- function(
   x
@@ -208,10 +208,11 @@ handle_by_arg <- function(by, dataset, subset, subset_style) {
   } else if (is.character(by)) {
     stratum_col_nms <- by
     by_expr <- quote(
-      unique(dataset[j = .SD, .SDcols = stratum_col_nms], by = stratum_col_nms)
+      unique(x = dataset[j = .SD, .SDcols = stratum_col_nms],
+             by = stratum_col_nms)
     )
     if (!is.null(subset)) {
-      by_expr[["i"]] <- quote(subset)
+      by_expr[["x"]][["i"]] <- quote(subset)
     }
     by <- eval(by_expr)
     data.table::setkeyv(by, stratum_col_nms)

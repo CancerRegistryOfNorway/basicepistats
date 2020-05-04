@@ -1,11 +1,11 @@
 Package: basicepistats
 Type: Package
 Title: Calculate Basic Epidemiological Statistics
-Version: 0.1.1
+Version: 0.1.2
 Authors@R: person("Joonas", "Miettinen", email = "joonas.miettinen@cancer.fi", role = c("aut", "cre"))
 Description: Includes functions for computing case counts, prevalence counts,
   and other routine epidemiological statistics.
-Imports: data.table, directadjusting, easyassertions
+Imports: data.table, directadjusting, easyassertions, popEpi
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

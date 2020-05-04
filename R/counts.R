@@ -79,7 +79,7 @@ stat_unique_count <- function(
   subset_style = c("zeros", "drop")[1]
 ) {
   easyassertions::assert_is_character_nonNA_vector(unique_by)
-  easyassertions::assert_is_data.table_with_required_names(
+  easyassertions::assert_is_data_table_with_required_names(
     x,
     required_names = unique_by
   )
@@ -103,6 +103,9 @@ stat_expr <- function(
   subset_style = "zeros"
 ) {
   easyassertions::assert_is_data_table(x)
+  stopifnot(
+    inherits(expr, c("call", "name"))
+  )
   subset <- handle_subset_arg(dataset = x)
   easyassertions::assert_atom_is_in_set(
     x = subset_style,
@@ -119,21 +122,24 @@ stat_expr <- function(
 
   x_expr <- quote(x[])
   x_expr[["j"]] <- expr
+  if (grepl(".SD", paste0(deparse(expr), collapse = ""))) {
+    x_expr[[".SDcols"]] <- names(x)
+  }
   if (!is.null(subset)) {
     x_expr[["i"]] <- quote(subset)
   }
   if (!is.null(stratum_col_nms)) {
     x_expr[["keyby"]] <- stratum_col_nms
   }
-  count_dt <- eval(x_expr)
+  result_dt <- eval(x_expr)
 
-  count_dt <- enforce_level_space(
-    x = count_dt,
-    value_col_nms = "N",
+  result_dt <- enforce_level_space(
+    x = result_dt,
+    value_col_nms = setdiff(names(result_dt), stratum_col_nms),
     fill = 0L,
     joint_column_level_space = by
   )
-  return(count_dt[])
+  return(result_dt[])
 }
 
 

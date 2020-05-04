@@ -1,5 +1,5 @@
 
-#' @param joint_column_level_space `[NULL, data.table, list]` (optional, default `NULL`)
+#' @param by `[NULL, data.table, list]` (optional, default `NULL`)
 #'
 #' - `NULL`: counts are produced using the levels observed in the
 #'   dataset; see `subset_style` for the effect of subsetting

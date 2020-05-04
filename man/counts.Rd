@@ -21,6 +21,19 @@ stat_unique_count(
 
 compute counts in this dataset}
 
+\item{by}{\verb{[NULL, data.table, list]} (optional, default \code{NULL})
+\itemize{
+\item \code{NULL}: counts are produced using the levels observed in the
+dataset; see \code{subset_style} for the effect of subsetting
+\item \code{data.table}: describes the stratum column levels and the relationships
+between stratum columns; must have a column for all \code{stratum_col_nms}
+unless \code{stratum_col_nms} is \code{NULL}
+\item \code{list}: a named \code{list}, where each name must be a name of a column in \code{x};
+each element of the \code{list} contains the set of levels for the correspoding
+column; the \code{list} is turned into a \code{data.table} and that is used as if
+you had supplied a \code{data.table}
+}}
+
 \item{subset}{\verb{[NULL, integer, logical]} (optional, default \code{NULL})
 \itemize{
 \item \code{NULL}: no subsetting, i.e. use whole dataset
@@ -45,19 +58,6 @@ will have zero counts
 
 names of columns in \code{x}; unique combinations of these columns are counted;
 e.g. \code{unique_by = "my_subject_id"} to count numbers of subjects by strata}
-
-\item{joint_column_level_space}{\verb{[NULL, data.table, list]} (optional, default \code{NULL})
-\itemize{
-\item \code{NULL}: counts are produced using the levels observed in the
-dataset; see \code{subset_style} for the effect of subsetting
-\item \code{data.table}: describes the stratum column levels and the relationships
-between stratum columns; must have a column for all \code{stratum_col_nms}
-unless \code{stratum_col_nms} is \code{NULL}
-\item \code{list}: a named \code{list}, where each name must be a name of a column in \code{x};
-each element of the \code{list} contains the set of levels for the correspoding
-column; the \code{list} is turned into a \code{data.table} and that is used as if
-you had supplied a \code{data.table}
-}}
 }
 \description{
 Produce a stratified count table.

@@ -12,7 +12,7 @@
 #' @param offset_dt `[data.table]` (mandatory, no default)
 #'
 #' contains offsets (typically mean population sizes) for the counts produced
-#' using `x`; see [basicepistats::offset_dt]
+#' using `x`
 #' @param stratum_col_nms output will be stratified by these columns
 #' @param adjust_col_nms output will be adjusted by these columns; see
 #' [directadjusting::directly_adjusted_estimates]
