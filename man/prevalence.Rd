@@ -13,7 +13,8 @@ stat_prevalent_record_count(
   by = NULL,
   subset = NULL,
   subset_style = "zeros",
-  observation_time_points
+  observation_time_points,
+  observation_time_col_nm
 )
 
 stat_prevalent_subject_count(
@@ -24,7 +25,8 @@ stat_prevalent_subject_count(
   by = NULL,
   subset = NULL,
   subset_style = "zeros",
-  observation_time_points
+  observation_time_points,
+  observation_time_col_nm
 )
 }
 \arguments{
@@ -36,7 +38,8 @@ dataset containing one or more records by subject}
 
 name of column in \code{x} which specifies values in the time scale in which
 prevalence follow-up windows are determined (e.g. prevalence of subjects
-with event within 1, 5, 10 years)}
+with event within 1, 5, 10 years); the values in the column should be the
+values at the start of follow-up (e.g. time of diagnosis)}
 
 \item{follow_up_time_window_widths}{\verb{[numeric]} (mandatory, default \code{Inf})
 
@@ -77,17 +80,18 @@ will have zero counts
 (zero counts are impossible)
 }}
 
-\item{observation_time_points}{\verb{[list]} (mandatory, no default)
+\item{observation_time_points}{\verb{[vector]} (mandatory, no default)
 
-a named list, where the names correspond to time scales in \code{x} and the
-elements are points in the time scale where prevalence counts are intended
-to be observed; e.g. \code{list(date = as.Date("1999-12-31"))} observes
-prevalences on the last day of 1999. multiple time scales can be supplied,
-whereupon prevalences are observed along the different time scales
-independently of each other, e.g.
-\code{list(date = as.Date("1999-12-31"), age = 60 * 365.25)}
-observes prevalence at the end of 1999 and separately at the 60th birthday
-and NOT instances that turned 60 at the end of 1999.}
+a vector of non-NA values of the same class as \code{x[[observation_time_col_nm]]};
+prevalence is observed at each time point supplied here;
+e.g. \code{c(1999.999, 2000.999)} for the ends of years 1999 and 2000
+in fractional years if \code{x[[observation_time_col_nm]]} contains calendar
+time values in fractional years}
+
+\item{observation_time_col_nm}{\verb{[character]} (mandatory, no default)
+
+name of column in \code{x} along which prevalence snapshots are taken; snapshots
+are supplied via \code{observation_time_points}}
 
 \item{subject_id_col_nm}{\verb{[character]} (mandatory, no default)
 
@@ -124,14 +128,15 @@ stat_prevalent_record_count(
   follow_up_time_col_nm = "follow_up_time",
   follow_up_time_window_widths = c(1, 5, Inf),
   by = "sex",
-  observation_time_points = list(calendar_time = 2000.0)
+  observation_time_points = 2000.0,
+  observation_time_col_nm = "calendar_time"
 )
 
 library("data.table")
 
 my_dataset <- data.table(
-  id = 1:2,
-  sex = 1:2,
+  id = c(1,1,2,2),
+  sex = c(1,1,2,2),
   follow_up_time = c(2.5, 4.5),
   calendar_time = c(2001.5, 2000.5)
 )
@@ -141,7 +146,8 @@ stat_prevalent_subject_count(
   follow_up_time_window_widths = c(1, 5, Inf),
   subject_id_col_nm = "id",
   by = "sex",
-  observation_time_points = list(calendar_time = 2000.0)
+  observation_time_points = 2000.0,
+  observation_time_col_nm = "calendar_time"
 )
 
 }

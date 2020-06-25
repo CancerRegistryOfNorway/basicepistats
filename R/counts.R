@@ -139,6 +139,11 @@ stat_expr <- function(
     fill = 0L,
     joint_column_level_space = by
   )
+  set_stat_table(
+    result_dt,
+    stratum_col_nms = names(by),
+    value_col_nms = setdiff(names(result_dt), names(by))
+  )
   return(result_dt[])
 }
 

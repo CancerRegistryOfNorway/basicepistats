@@ -19,7 +19,8 @@
 #'
 #' name of column in `x` which specifies values in the time scale in which
 #' prevalence follow-up windows are determined (e.g. prevalence of subjects
-#' with event within 1, 5, 10 years)
+#' with event within 1, 5, 10 years); the values in the column should be the
+#' values at the start of follow-up (e.g. time of diagnosis)
 #' @param follow_up_time_window_widths `[numeric]` (mandatory, default `Inf`)
 #'
 #' widhts of windowss in time scale given in `follow_up_time_col_nm`;
@@ -27,17 +28,17 @@
 #' all subjects
 #' @template arg_subset
 #' @template arg_subset_style
-#' @param observation_time_points `[list]` (mandatory, no default)
+#' @param observation_time_points `[vector]` (mandatory, no default)
 #'
-#' a named list, where the names correspond to time scales in `x` and the
-#' elements are points in the time scale where prevalence counts are intended
-#' to be observed; e.g. `list(date = as.Date("1999-12-31"))` observes
-#' prevalences on the last day of 1999. multiple time scales can be supplied,
-#' whereupon prevalences are observed along the different time scales
-#' independently of each other, e.g.
-#' `list(date = as.Date("1999-12-31"), age = 60 * 365.25)`
-#' observes prevalence at the end of 1999 and separately at the 60th birthday
-#' and NOT instances that turned 60 at the end of 1999.
+#' a vector of non-NA values of the same class as `x[[observation_time_col_nm]]`;
+#' prevalence is observed at each time point supplied here;
+#' e.g. `c(1999.999, 2000.999)` for the ends of years 1999 and 2000
+#' in fractional years if `x[[observation_time_col_nm]]` contains calendar
+#' time values in fractional years
+#' @param observation_time_col_nm `[character]` (mandatory, no default)
+#'
+#' name of column in `x` along which prevalence snapshots are taken; snapshots
+#' are supplied via `observation_time_points`
 #' @name prevalence
 NULL
 
@@ -60,7 +61,8 @@ NULL
 #'   follow_up_time_col_nm = "follow_up_time",
 #'   follow_up_time_window_widths = c(1, 5, Inf),
 #'   by = "sex",
-#'   observation_time_points = list(calendar_time = 2000.0)
+#'   observation_time_points = 2000.0,
+#'   observation_time_col_nm = "calendar_time"
 #' )
 #'
 stat_prevalent_record_count <- function(
@@ -70,129 +72,118 @@ stat_prevalent_record_count <- function(
   by = NULL,
   subset = NULL,
   subset_style = "zeros",
-  observation_time_points
+  observation_time_points,
+  observation_time_col_nm
 ) {
   unique_by <- NULL
   do.call(stat_prevalence_count, mget(names(formals(stat_prevalence_count))))
 }
 
 
-#' @importFrom popEpi splitMulti
-#' @importFrom data.table setDT setattr := .N .SD set setkeyv
+#' @importFrom data.table setDT set rbindlist setcolorder setkeyv
 #' @importFrom easyassertions assert_is_character_nonNA_atom
 #' assert_is_number_nonNA_vector assert_is_data_table_with_required_names
-#' assert_is_one_of
 stat_prevalence_count <- function(
   x,
   follow_up_time_col_nm,
   follow_up_time_window_widths = Inf,
   by = NULL,
-  unique_by = NULL,
   subset = NULL,
   subset_style = "zeros",
-  observation_time_points
+  observation_time_points,
+  observation_time_col_nm
 ) {
   # assertions -----------------------------------------------------------------
   easyassertions::assert_is_character_nonNA_atom(follow_up_time_col_nm)
   easyassertions::assert_is_number_nonNA_vector(follow_up_time_window_widths)
-  time_scale_names <- c(follow_up_time_col_nm, names(observation_time_points))
+  easyassertions::assert_is_character_nonNA_atom(observation_time_col_nm)
+  easyassertions::assert_is_nonNA(observation_time_points)
+  easyassertions::assert_is_vector(observation_time_points)
+  time_scale_names <- c(follow_up_time_col_nm, observation_time_col_nm)
   easyassertions::assert_is_data_table_with_required_names(
     x,
     required_names = time_scale_names
   )
-  easyassertions::assert_is_one_of(
-    unique_by,
-    fun_nms = c("assert_is_character_nonNA_vector", "assert_is_NULL")
+
+  # handle by & subset ---------------------------------------------------------
+  subset <- handle_subset_arg(dataset = x)
+  by <- handle_by_arg(
+    by = by, dataset = x, subset = subset, subset_style = subset_style
   )
 
-  # create a Lexis data.table --------------------------------------------------
-  reserved_col_nms <- c(
-    "lex.dur", "lex.id", "lex.Cst", "lex.Xst", ".__fut_window"
-  )
-  keep_col_nms <- setdiff(names(x), reserved_col_nms)
-  dt <- data.table::setDT(mget(keep_col_nms, as.environment(x)))
-  data.table::setattr(dt, "class", c("Lexis", "data.table", "data.frame"))
-  data.table::setattr(dt, "time.scales", time_scale_names)
-  old_breaks_list <- structure(vector("list", length(time_scale_names)),
-                               names = time_scale_names)
-  data.table::setattr(dt, "breaks", old_breaks_list)
-  dt[, (reserved_col_nms) := NA_integer_]
-  dt[, "lex.dur" := .SD[[1]], .SDcols = follow_up_time_col_nm]
-  lapply(time_scale_names, function(ts_nm) {
-    dt[
-      j = (ts_nm) := .SD[[1L]] - .SD[[2]],
-      .SDcols = c(ts_nm, "lex.dur")
-      ]
-  })
-  dt[, "lex.id" := 1:.N]
-
-  # split ----------------------------------------------------------------------
-  dt <- popEpi::splitMulti(
-    data = dt,
-    breaks = observation_time_points,
-  )
-
-  # handle subset, by ----------------------------------------------------------
-  subset <- handle_subset_arg(dataset = dt)
-  is_at_an_observation_point <- rowSums(
-    data.table::setDT(lapply(names(observation_time_points), function(ts_nm) {
-      time_points <- observation_time_points[[ts_nm]]
-      dt[[ts_nm]] %in% time_points
-    }))
-  ) > 0L
-  if (is.logical(subset)) {
-    subset <- subset & is_at_an_observation_point
-  } else if (is.integer(subset)) {
-    subset <- intersect(subset, which(is_at_an_observation_point))
-  } else {
-    subset <- is_at_an_observation_point
-  }
-
-  by <- handle_by_arg(dataset = dt,
-                      by = by,
-                      subset = subset,
-                      subset_style = subset_style)
-  dt <- dt[subset, ]
-
-  # create follow-up time windows ----------------------------------------------
-  fut_window_breaks <- sort(union(0L, follow_up_time_window_widths))
-  fut_window_labels <- paste0("[0, ", fut_window_breaks[-1], ")")
-  data.table::set(
-    dt,
-    j = ".__fut_window",
-    value = cut(
-      x = dt[[follow_up_time_col_nm]],
-      breaks = fut_window_breaks,
-      labels = fut_window_labels,
-      right = FALSE
-    )
-  )
-
-  # tabulate counts ------------------------------------------------------------
+  window_labels <- paste0("[0, ", follow_up_time_window_widths, ")")
   by <- list(
     by = by,
-    .__fut_window = factor(seq_along(fut_window_labels),
-                           labels = fut_window_labels)
+    time_since_entry = factor(window_labels, levels = window_labels)
   )
-  if (is.null(unique_by)) {
-    count_dt <- stat_count(
-      x = dt, by = by, subset_style = subset_style
-    )
-  } else {
-    count_dt <- stat_unique_count(
-      x = dt, by = by, subset_style = subset_style,
-      unique_by = unique_by
+  if (is.null(by[["by"]])) {
+    by["by"] <- NULL
+  }
+  by <- level_space_list_to_level_space_data_table(by)
+
+  # working dataset ---------------------------------------------------------
+  dt <- data.table::setDT(list(
+    obs_t = x[[observation_time_col_nm]],
+    fut = x[[follow_up_time_col_nm]]
+  ))
+  dt[, "time_since_entry" := by[["time_since_entry"]][1L]]
+  stratum_col_nms <- setdiff(names(by), "time_since_entry")
+  if (length(stratum_col_nms) > 0L) {
+    data.table::set(
+      dt,
+      j = stratum_col_nms,
+      value = mget(stratum_col_nms, envir = as.environment(x))
     )
   }
 
-  stratum_col_nms <- setdiff(names(count_dt), "N")
-  data.table::setkeyv(count_dt, stratum_col_nms)
-  N <- NULL # to appease R CMD CHECK
+  # counts ---------------------------------------------------------------------
+  fut_breaks <- c(0, follow_up_time_window_widths)
+  count_dt <- data.table::rbindlist(
+    lapply(observation_time_points, function(obs_t_value) {
+      data.table::set(dt, j = "obs_t_diff", value = obs_t_value - dt[["obs_t"]])
+      data.table::set(
+        x = dt,
+        j = "time_since_entry",
+        value = cut(dt[["obs_t_diff"]], breaks = fut_breaks, right = FALSE,
+                    labels = window_labels)
+      )
+
+      select <- dt[["fut"]] >= dt[["obs_t_diff"]] &
+        dt[["obs_t"]] <= obs_t_value &
+        dt[["obs_t"]] + dt[["fut"]] > obs_t_value
+
+      if (is.logical(subset)) {
+        subset <- subset & select
+      } else if (is.integer(subset)) {
+        subset <- intersect(subset, which(select))
+      } else if (is.null(subset)) {
+        subset <- select
+      } else {
+        stop("internal error: subset not logical, integer, nor NULL")
+      }
+      count_dt <- stat_count(
+        x = dt, by = by, subset = subset, subset_style = subset_style
+      )
+      data.table::set(count_dt, j = observation_time_col_nm,
+                      value = obs_t_value)
+      count_dt[]
+    })
+  )
+
+  # final touches --------------------------------------------------------------
+  nonvalue_col_nms <- c(
+    stratum_col_nms, observation_time_col_nm, "time_since_entry"
+  )
+  all_col_nms <- c(nonvalue_col_nms, "N")
+  data.table::setcolorder(count_dt, all_col_nms)
+  data.table::setkeyv(count_dt, nonvalue_col_nms)
   count_dt[
     j = "N" := cumsum(N),
-    by = eval(setdiff(stratum_col_nms, ".__fut_window"))
+    by = eval(setdiff(nonvalue_col_nms, "time_since_entry"))
     ]
-
+  set_stat_table(
+    count_dt, stratum_col_nms = nonvalue_col_nms, value_col_nms = "N"
+  )
   return(count_dt[])
 }
 
@@ -207,8 +198,8 @@ stat_prevalence_count <- function(
 #' library("data.table")
 #'
 #' my_dataset <- data.table(
-#'   id = 1:2,
-#'   sex = 1:2,
+#'   id = c(1,1,2,2),
+#'   sex = c(1,1,2,2),
 #'   follow_up_time = c(2.5, 4.5),
 #'   calendar_time = c(2001.5, 2000.5)
 #' )
@@ -218,7 +209,8 @@ stat_prevalence_count <- function(
 #'   follow_up_time_window_widths = c(1, 5, Inf),
 #'   subject_id_col_nm = "id",
 #'   by = "sex",
-#'   observation_time_points = list(calendar_time = 2000.0)
+#'   observation_time_points = 2000.0,
+#'   observation_time_col_nm = "calendar_time"
 #' )
 #'
 stat_prevalent_subject_count <- function(
@@ -229,7 +221,8 @@ stat_prevalent_subject_count <- function(
   by = NULL,
   subset = NULL,
   subset_style = "zeros",
-  observation_time_points
+  observation_time_points,
+  observation_time_col_nm
 ) {
   easyassertions::assert_is_character_nonNA_atom(subject_id_col_nm)
   easyassertions::assert_is_data_table_with_required_names(
@@ -239,6 +232,16 @@ stat_prevalent_subject_count <- function(
   unique_by <- subject_id_col_nm
   do.call(stat_prevalence_count, mget(names(formals(stat_prevalence_count))))
 }
+
+
+
+
+
+
+
+
+
+
 
 
 
