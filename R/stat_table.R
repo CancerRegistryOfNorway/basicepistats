@@ -11,6 +11,12 @@
 #' - `[.stat_table`: object to extract from
 #' - `stat_table_meta`, `stat_table_stratum_col_nms`
 #'   `stat_table_value_col_nms`: object to extract `stat_table` meta data from
+#' @param stratum_col_nms `[character]` (mandatory, no default)
+#'
+#' names of stratifying columns in `x`
+#' @param value_col_nms `[character]` (mandatory, no default)
+#'
+#' names of columns in `x` containing the actual values (statistics)
 #' @name stat_table
 
 
@@ -94,6 +100,7 @@ print.stat_table <- function(x, ...) {
 #' @rdname stat_table
 #' @importFrom data.table setattr
 #' @export
+#' @param ... passed to next method (see `?"["`)
 "[.stat_table" <- function(x, ...) {
   meta <- attr(x, "stat_table_meta")
   data.table::setattr(x, "class", setdiff(class(x), "stat_table"))
@@ -113,7 +120,9 @@ print.stat_table <- function(x, ...) {
 #' @rdname stat_table
 #' @importFrom data.table setattr
 #' @export
-"[<-.stat_table" <- function(x, ...) {
+#' @param value see `?"[<-"`
+#'
+"[<-.stat_table" <- function(x, ..., value) {
   data.table::setattr(x, "class", setdiff(class(x), "stat_table"))
   meta <- stat_table_meta(x)
   set_stat_table(
@@ -121,7 +130,7 @@ print.stat_table <- function(x, ...) {
     stratum_col_nms = intersect(meta[["stratum_col_nms"]], names(x)),
     value_col_nms = intersect(meta[["value_col_nms"]], names(x))
   )
-  `[<-`(x = x, ...)
+  `[<-`(x = x, ..., value = value)
 }
 
 
@@ -129,7 +138,7 @@ print.stat_table <- function(x, ...) {
 #' @rdname stat_table
 #' @importFrom data.table setattr
 #' @export
-"[[<-.stat_table" <- function(x, ...) {
+"[[<-.stat_table" <- function(x, ..., value) {
   data.table::setattr(x, "class", setdiff(class(x), "stat_table"))
   meta <- stat_table_meta(x)
   set_stat_table(
@@ -137,5 +146,5 @@ print.stat_table <- function(x, ...) {
     stratum_col_nms = intersect(meta[["stratum_col_nms"]], names(x)),
     value_col_nms = intersect(meta[["value_col_nms"]], names(x))
   )
-  `[<-`(x = x, ...)
+  `[[<-`(x = x, ..., value = value)
 }

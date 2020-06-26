@@ -46,6 +46,18 @@ an R object to coerce to \code{stat_table}
 \item \code{stat_table_meta}, \code{stat_table_stratum_col_nms}
 \code{stat_table_value_col_nms}: object to extract \code{stat_table} meta data from
 }}
+
+\item{stratum_col_nms}{\verb{[character]} (mandatory, no default)
+
+names of stratifying columns in \code{x}}
+
+\item{value_col_nms}{\verb{[character]} (mandatory, no default)
+
+names of columns in \code{x} containing the actual values (statistics)}
+
+\item{...}{passed to next method (see \code{?"["})}
+
+\item{value}{see \code{?"[<-"}}
 }
 \description{
 Class \code{stat_table} methods and functions.

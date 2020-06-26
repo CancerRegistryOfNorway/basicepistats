@@ -194,13 +194,14 @@ stat_prevalence_count <- function(
   all_col_nms <- c(nonvalue_col_nms, "N")
   data.table::setcolorder(count_dt, all_col_nms)
   data.table::setkeyv(count_dt, nonvalue_col_nms)
+  N <- NULL # to appease R CMD CHECK
   count_dt[
     j = "N" := cumsum(N),
     by = eval(setdiff(nonvalue_col_nms, "time_since_entry"))
     ]
-  set_stat_table(
-    count_dt, stratum_col_nms = nonvalue_col_nms, value_col_nms = "N"
-  )
+  # set_stat_table(
+  #   count_dt, stratum_col_nms = nonvalue_col_nms, value_col_nms = "N"
+  # )
   return(count_dt[])
 }
 
