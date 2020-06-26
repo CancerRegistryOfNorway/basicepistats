@@ -24,8 +24,8 @@
 level_space_list_to_level_space_data_table <- function(
   x
 ) {
-  easyassertions::assert_is_list(x)
-  easyassertions::assert_is_uniquely_named(x)
+  dbc::assert_is_list(x)
+  dbc::assert_is_uniquely_named(x)
   stopifnot(
     vapply(x,
            function(elem) {is.vector(x) || data.table::is.data.table(x)},
@@ -70,13 +70,13 @@ enforce_level_space <- function(
   fill = 0L,
   joint_column_level_space
 ) {
-  easyassertions::assert_is_character_nonNA_vector(value_col_nms)
-  easyassertions::assert_is_data_table_with_required_names(
+  dbc::assert_is_character_nonNA_vector(value_col_nms)
+  dbc::assert_is_data_table_with_required_names(
     x,
     required_names = c(value_col_nms, names(joint_column_level_space))
   )
-  easyassertions::assert_is_number_nonNA_vector(fill)
-  easyassertions::assert_is_data_table(joint_column_level_space)
+  dbc::assert_is_number_nonNA_vector(fill)
+  dbc::assert_is_data_table(joint_column_level_space)
 
   if (length(fill) == 1L) {
     fill <- rep(fill, length(value_col_nms))
@@ -112,14 +112,14 @@ handle_subset_arg <- function(
   enclosing_env = parent.frame(2L),
   function_call = sys.call(1L)
 ) {
-  easyassertions::assert_is_character_nonNA_atom(subset_arg_nm)
-  easyassertions::assert_has_one_of_classes(
+  dbc::assert_is_character_nonNA_atom(subset_arg_nm)
+  dbc::assert_has_one_of_classes(
     dataset, classes = c("data.frame", "environment")
   )
-  easyassertions::assert_has_class(
+  dbc::assert_has_class(
     function_env, required_class = "environment"
   )
-  easyassertions::assert_has_class(
+  dbc::assert_has_class(
     enclosing_env, required_class = "environment"
   )
   stopifnot(
@@ -142,7 +142,7 @@ handle_subset_arg <- function(
   subset_value <- eval(subset_expr, envir = value_eval_env)
 
   subset_expr_text <- paste0(deparse(subset_expr), collapse = "")
-  easyassertions::assert_is_one_of(
+  dbc::assert_is_one_of(
     subset_value,
     x_nm = subset_expr_text,
     fun_nms = c("assert_is_NULL", "assert_is_logical_vector",
@@ -187,22 +187,22 @@ handle_subset_arg <- function(
 
 
 #' @importFrom data.table is.data.table .SD setkeyv
-#' @importFrom easyassertions assert_is_one_of
+#' @importFrom dbc assert_is_one_of
 #' assert_is_data_table_with_required_names
 handle_by_arg <- function(by, dataset, subset, subset_style) {
   # returns a data.table usually but NULL if by = NULL.
-  easyassertions::assert_is_one_of(
+  dbc::assert_is_one_of(
     by,
     fun_nms = c("assert_is_data_table", "assert_is_character_nonNA_vector",
                 "assert_is_list", "assert_is_NULL")
   )
   if (data.table::is.data.table(by)) {
-    easyassertions::assert_is_data_table_with_required_names(
+    dbc::assert_is_data_table_with_required_names(
       x = dataset, required_names = names(by)
     )
   } else if (inherits(by, "list")) {
     by <- level_space_list_to_level_space_data_table(by)
-    easyassertions::assert_is_data_table_with_required_names(
+    dbc::assert_is_data_table_with_required_names(
       x = dataset, required_names = names(by)
     )
   } else if (is.character(by)) {

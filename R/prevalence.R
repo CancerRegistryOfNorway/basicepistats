@@ -80,8 +80,8 @@ stat_prevalent_record_count <- function(
 }
 
 
-#' @importFrom data.table setDT set rbindlist setcolorder setkeyv
-#' @importFrom easyassertions assert_is_character_nonNA_atom
+#' @importFrom data.table setDT set rbindlist setcolorder setkeyv between
+#' @importFrom dbc assert_is_character_nonNA_atom
 #' assert_is_number_nonNA_vector assert_is_data_table_with_required_names
 stat_prevalence_count <- function(
   x,
@@ -94,13 +94,13 @@ stat_prevalence_count <- function(
   observation_time_col_nm
 ) {
   # assertions -----------------------------------------------------------------
-  easyassertions::assert_is_character_nonNA_atom(follow_up_time_col_nm)
-  easyassertions::assert_is_number_nonNA_vector(follow_up_time_window_widths)
-  easyassertions::assert_is_character_nonNA_atom(observation_time_col_nm)
-  easyassertions::assert_is_nonNA(observation_time_points)
-  easyassertions::assert_is_vector(observation_time_points)
+  dbc::assert_is_character_nonNA_atom(follow_up_time_col_nm)
+  dbc::assert_is_number_nonNA_vector(follow_up_time_window_widths)
+  dbc::assert_is_character_nonNA_atom(observation_time_col_nm)
+  dbc::assert_is_nonNA(observation_time_points)
+  dbc::assert_is_vector(observation_time_points)
   time_scale_names <- c(follow_up_time_col_nm, observation_time_col_nm)
-  easyassertions::assert_is_data_table_with_required_names(
+  dbc::assert_is_data_table_with_required_names(
     x,
     required_names = time_scale_names
   )
@@ -123,10 +123,15 @@ stat_prevalence_count <- function(
 
   # working dataset ---------------------------------------------------------
   dt <- data.table::setDT(list(
-    obs_t = x[[observation_time_col_nm]],
+    obs_t_start = x[[observation_time_col_nm]],
     fut = x[[follow_up_time_col_nm]]
   ))
-  dt[, "time_since_entry" := by[["time_since_entry"]][1L]]
+  data.table::set(
+    dt, j = "time_since_entry", value = by[["time_since_entry"]][1L]
+  )
+  data.table::set(
+    dt, j = "obs_t_stop", value = dt[["obs_t_start"]] + dt[["fut"]]
+  )
   stratum_col_nms <- setdiff(names(by), "time_since_entry")
   if (length(stratum_col_nms) > 0L) {
     data.table::set(
@@ -139,18 +144,29 @@ stat_prevalence_count <- function(
   # counts ---------------------------------------------------------------------
   fut_breaks <- c(0, follow_up_time_window_widths)
   count_dt <- data.table::rbindlist(
-    lapply(observation_time_points, function(obs_t_value) {
-      data.table::set(dt, j = "obs_t_diff", value = obs_t_value - dt[["obs_t"]])
+    lapply(seq_along(observation_time_points), function(i) {
+      obs_t_point <- observation_time_points[i]
       data.table::set(
-        x = dt,
-        j = "time_since_entry",
-        value = cut(dt[["obs_t_diff"]], breaks = fut_breaks, right = FALSE,
-                    labels = window_labels)
+        dt,
+        j = paste0("in_follow_up_at_obs_t_point"),
+        value = data.table::between(
+          x = obs_t_point,
+          lower = dt[["obs_t_start"]], # [a, b) bounds
+          upper = dt[["obs_t_stop"]] + .Machine$double.eps * 0.95,
+          incbounds = TRUE
+        )
       )
-
-      select <- dt[["fut"]] >= dt[["obs_t_diff"]] &
-        dt[["obs_t"]] <= obs_t_value &
-        dt[["obs_t"]] + dt[["fut"]] > obs_t_value
+      data.table::set(
+        dt,
+        j = "time_since_entry",
+        value = cut(
+          as.numeric(obs_t_point - dt[["obs_t_start"]]),
+          breaks = fut_breaks,
+          right = FALSE,
+          labels = window_labels
+        )
+      )
+      select <- dt[["in_follow_up_at_obs_t_point"]]
 
       if (is.logical(subset)) {
         subset <- subset & select
@@ -165,8 +181,9 @@ stat_prevalence_count <- function(
         x = dt, by = by, subset = subset, subset_style = subset_style
       )
       data.table::set(count_dt, j = observation_time_col_nm,
-                      value = obs_t_value)
+                      value = obs_t_point)
       count_dt[]
+
     })
   )
 
@@ -224,8 +241,8 @@ stat_prevalent_subject_count <- function(
   observation_time_points,
   observation_time_col_nm
 ) {
-  easyassertions::assert_is_character_nonNA_atom(subject_id_col_nm)
-  easyassertions::assert_is_data_table_with_required_names(
+  dbc::assert_is_character_nonNA_atom(subject_id_col_nm)
+  dbc::assert_is_data_table_with_required_names(
     x,
     required_names = subject_id_col_nm
   )

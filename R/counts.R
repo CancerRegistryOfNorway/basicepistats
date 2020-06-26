@@ -78,8 +78,8 @@ stat_unique_count <- function(
   subset = NULL,
   subset_style = c("zeros", "drop")[1]
 ) {
-  easyassertions::assert_is_character_nonNA_vector(unique_by)
-  easyassertions::assert_is_data_table_with_required_names(
+  dbc::assert_is_character_nonNA_vector(unique_by)
+  dbc::assert_is_data_table_with_required_names(
     x,
     required_names = unique_by
   )
@@ -94,7 +94,7 @@ stat_unique_count <- function(
 
 
 #' @importFrom data.table setkeyv .N := is.data.table
-#' @importFrom easyassertions assert_is_data_table assert_atom_is_in_set
+#' @importFrom dbc assert_is_data_table assert_atom_is_in_set
 stat_expr <- function(
   x,
   expr = quote(.N),
@@ -102,12 +102,12 @@ stat_expr <- function(
   subset = NULL,
   subset_style = "zeros"
 ) {
-  easyassertions::assert_is_data_table(x)
+  dbc::assert_is_data_table(x)
   stopifnot(
     inherits(expr, c("call", "name"))
   )
   subset <- handle_subset_arg(dataset = x)
-  easyassertions::assert_atom_is_in_set(
+  dbc::assert_atom_is_in_set(
     x = subset_style,
     x_nm = "subset_style",
     set = c("zeros", "drop")
