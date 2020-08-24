@@ -30,16 +30,45 @@
 #' @template arg_subset_style
 #' @param observation_time_points `[vector]` (mandatory, no default)
 #'
-#' a vector of non-NA values of the same class as `x[[observation_time_col_nm]]`;
+#' a vector of non-NA values of the same class as `x[[entry_time_col_nm]]`;
 #' prevalence is observed at each time point supplied here;
 #' e.g. `c(1999.999, 2000.999)` for the ends of years 1999 and 2000
-#' in fractional years if `x[[observation_time_col_nm]]` contains calendar
+#' in fractional years if `x[[entry_time_col_nm]]` contains calendar
 #' time values in fractional years
-#' @param observation_time_col_nm `[character]` (mandatory, no default)
+#' @param entry_time_col_nm `[character]` (mandatory, no default)
 #'
 #' name of column in `x` along which prevalence snapshots are taken; snapshots
 #' are supplied via `observation_time_points`
 #' @name prevalence
+#' @details
+#'
+#' The following logic determines whether a record is prevalent at a specific
+#' observation time point:
+#'
+#' ```
+#' entry_time <= observation_time_point < entry_time + follow_up_time
+#' ```
+#'
+#' Additionally, a record's entry to follow-up occurred no more than some
+#' specified time ago if
+#'
+#' ```
+#' (observation_time_point - entry_time) < follow_up_time_window_width
+#' ```
+#'
+#' Therefore, e.g. the number of prevalent cases that entered follow-up no more
+#' than 5 years ago from the time sligthly before midnight 1999-12-31 can be
+#' found using fractional years data by
+#'
+#' ```
+#' entry_time <= 1999.9999 < entry_time + follow_up_time
+#' ```
+#' and
+#'
+#' ```
+#' 1999.9999 - entry_time < 5.0
+#' ```
+
 NULL
 
 #' @rdname prevalence
@@ -62,7 +91,7 @@ NULL
 #'   follow_up_time_window_widths = c(1, 5, Inf),
 #'   by = "sex",
 #'   observation_time_points = 2000.0,
-#'   observation_time_col_nm = "calendar_time"
+#'   entry_time_col_nm = "calendar_time"
 #' )
 #'
 stat_prevalent_record_count <- function(
@@ -73,9 +102,8 @@ stat_prevalent_record_count <- function(
   subset = NULL,
   subset_style = "zeros",
   observation_time_points,
-  observation_time_col_nm
+  entry_time_col_nm
 ) {
-  unique_by <- NULL
   do.call(stat_prevalence_count, mget(names(formals(stat_prevalence_count))))
 }
 
@@ -91,15 +119,15 @@ stat_prevalence_count <- function(
   subset = NULL,
   subset_style = "zeros",
   observation_time_points,
-  observation_time_col_nm
+  entry_time_col_nm
 ) {
   # assertions -----------------------------------------------------------------
   dbc::assert_is_character_nonNA_atom(follow_up_time_col_nm)
   dbc::assert_is_number_nonNA_vector(follow_up_time_window_widths)
-  dbc::assert_is_character_nonNA_atom(observation_time_col_nm)
+  dbc::assert_is_character_nonNA_atom(entry_time_col_nm)
   dbc::assert_is_nonNA(observation_time_points)
   dbc::assert_is_vector(observation_time_points)
-  time_scale_names <- c(follow_up_time_col_nm, observation_time_col_nm)
+  time_scale_names <- c(follow_up_time_col_nm, entry_time_col_nm)
   dbc::assert_is_data_table_with_required_names(
     x,
     required_names = time_scale_names
@@ -123,7 +151,7 @@ stat_prevalence_count <- function(
 
   # working dataset ---------------------------------------------------------
   dt <- data.table::setDT(list(
-    obs_t_start = x[[observation_time_col_nm]],
+    obs_t_start = x[[entry_time_col_nm]],
     fut = x[[follow_up_time_col_nm]]
   ))
   data.table::set(
@@ -147,17 +175,17 @@ stat_prevalence_count <- function(
     lapply(seq_along(observation_time_points), function(i) {
       obs_t_point <- observation_time_points[i]
       data.table::set(
-        dt,
-        j = paste0("in_follow_up_at_obs_t_point"),
+        x = dt,
+        j = "in_follow_up_at_obs_t_point",
         value = data.table::between(
           x = obs_t_point,
           lower = dt[["obs_t_start"]], # [a, b) bounds
-          upper = dt[["obs_t_stop"]] + .Machine$double.eps * 0.95,
+          upper = dt[["obs_t_stop"]] - .Machine$double.eps * 1.05,
           incbounds = TRUE
         )
       )
       data.table::set(
-        dt,
+        x = dt,
         j = "time_since_entry",
         value = cut(
           as.numeric(obs_t_point - dt[["obs_t_start"]]),
@@ -180,7 +208,7 @@ stat_prevalence_count <- function(
       count_dt <- stat_count(
         x = dt, by = by, subset = subset, subset_style = subset_style
       )
-      data.table::set(count_dt, j = observation_time_col_nm,
+      data.table::set(count_dt, j = entry_time_col_nm,
                       value = obs_t_point)
       count_dt[]
 
@@ -189,7 +217,7 @@ stat_prevalence_count <- function(
 
   # final touches --------------------------------------------------------------
   nonvalue_col_nms <- c(
-    stratum_col_nms, observation_time_col_nm, "time_since_entry"
+    stratum_col_nms, entry_time_col_nm, "time_since_entry"
   )
   all_col_nms <- c(nonvalue_col_nms, "N")
   data.table::setcolorder(count_dt, all_col_nms)
@@ -199,9 +227,7 @@ stat_prevalence_count <- function(
     j = "N" := cumsum(N),
     by = eval(setdiff(nonvalue_col_nms, "time_since_entry"))
     ]
-  # set_stat_table(
-  #   count_dt, stratum_col_nms = nonvalue_col_nms, value_col_nms = "N"
-  # )
+  data.table::setnames(count_dt, entry_time_col_nm, "time_of_observation")
   return(count_dt[])
 }
 
@@ -228,7 +254,7 @@ stat_prevalence_count <- function(
 #'   subject_id_col_nm = "id",
 #'   by = "sex",
 #'   observation_time_points = 2000.0,
-#'   observation_time_col_nm = "calendar_time"
+#'   entry_time_col_nm = "calendar_time"
 #' )
 #'
 stat_prevalent_subject_count <- function(
@@ -240,18 +266,25 @@ stat_prevalent_subject_count <- function(
   subset = NULL,
   subset_style = "zeros",
   observation_time_points,
-  observation_time_col_nm
+  entry_time_col_nm
 ) {
   dbc::assert_is_character_nonNA_atom(subject_id_col_nm)
   dbc::assert_is_data_table_with_required_names(
     x,
     required_names = subject_id_col_nm
   )
-  unique_by <- subject_id_col_nm
+  select <- !duplicated(x, by = subject_id_col_nm)
+  if (is.logical(subset)) {
+    subset <- subset & select
+  } else if (is.integer(subset)) {
+    subset <- intersect(subset, which(select))
+  } else if (is.null(subset)) {
+    subset <- select
+  } else {
+    stop("internal error: subset not logical, integer, nor NULL")
+  }
   do.call(stat_prevalence_count, mget(names(formals(stat_prevalence_count))))
 }
-
-
 
 
 

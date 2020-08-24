@@ -14,7 +14,7 @@ stat_prevalent_record_count(
   subset = NULL,
   subset_style = "zeros",
   observation_time_points,
-  observation_time_col_nm
+  entry_time_col_nm
 )
 
 stat_prevalent_subject_count(
@@ -26,7 +26,7 @@ stat_prevalent_subject_count(
   subset = NULL,
   subset_style = "zeros",
   observation_time_points,
-  observation_time_col_nm
+  entry_time_col_nm
 )
 }
 \arguments{
@@ -82,13 +82,13 @@ will have zero counts
 
 \item{observation_time_points}{\verb{[vector]} (mandatory, no default)
 
-a vector of non-NA values of the same class as \code{x[[observation_time_col_nm]]};
+a vector of non-NA values of the same class as \code{x[[entry_time_col_nm]]};
 prevalence is observed at each time point supplied here;
 e.g. \code{c(1999.999, 2000.999)} for the ends of years 1999 and 2000
-in fractional years if \code{x[[observation_time_col_nm]]} contains calendar
+in fractional years if \code{x[[entry_time_col_nm]]} contains calendar
 time values in fractional years}
 
-\item{observation_time_col_nm}{\verb{[character]} (mandatory, no default)
+\item{entry_time_col_nm}{\verb{[character]} (mandatory, no default)
 
 name of column in \code{x} along which prevalence snapshots are taken; snapshots
 are supplied via \code{observation_time_points}}
@@ -103,6 +103,22 @@ Compute subject prevalence at specific time points and optionally
 conditioning on time since event at the time points.
 }
 \details{
+The following logic determines whether a record is prevalent at a specific
+observation time point:\preformatted{entry_time <= observation_time_point < entry_time + follow_up_time
+}
+
+Additionally, a record's entry to follow-up occurred no more than some
+specified time ago if\preformatted{(observation_time_point - entry_time) < follow_up_time_window_width
+}
+
+Therefore, e.g. the number of prevalent cases that entered follow-up no more
+than 5 years ago from the time sligthly before midnight 1999-12-31 can be
+found using fractional years data by\preformatted{entry_time <= 1999.9999 < entry_time + follow_up_time
+}
+
+and\preformatted{1999.9999 - entry_time < 5.0
+}
+
 \itemize{
 \item \code{stat_prevalent_record_count}: counts record prevalence; if one subject
 has more than one records in the dataset, all their records are included
@@ -129,7 +145,7 @@ stat_prevalent_record_count(
   follow_up_time_window_widths = c(1, 5, Inf),
   by = "sex",
   observation_time_points = 2000.0,
-  observation_time_col_nm = "calendar_time"
+  entry_time_col_nm = "calendar_time"
 )
 
 library("data.table")
@@ -147,7 +163,7 @@ stat_prevalent_subject_count(
   subject_id_col_nm = "id",
   by = "sex",
   observation_time_points = 2000.0,
-  observation_time_col_nm = "calendar_time"
+  entry_time_col_nm = "calendar_time"
 )
 
 }
