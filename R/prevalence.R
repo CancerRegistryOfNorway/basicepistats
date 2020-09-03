@@ -179,8 +179,8 @@ stat_prevalence_count <- function(
         j = "in_follow_up_at_obs_t_point",
         value = data.table::between(
           x = obs_t_point,
-          lower = dt[["obs_t_start"]], # [a, b) bounds
-          upper = dt[["obs_t_stop"]] - .Machine$double.eps * 1.05,
+          lower = dt[["obs_t_start"]], # [a, b] bounds
+          upper = dt[["obs_t_stop"]],
           incbounds = TRUE
         )
       )
@@ -290,9 +290,254 @@ stat_prevalent_subject_count <- function(
 
 
 
+stat_year_based_prevalence_count <- function(
+  x,
+  entry_year_col_nm,
+  exit_year_col_nm,
+  observation_years,
+  maximum_follow_up_years = c(1L, 3L, 5L, 1e3L),
+  by = NULL,
+  subset = NULL,
+  subset_style = "zeros"
+) {
+  # assertions -----------------------------------------------------------------
+  dbc::assert_is_character_nonNA_atom(entry_year_col_nm)
+  dbc::assert_is_character_nonNA_atom(exit_year_col_nm)
+  dbc::assert_is_integer_nonNA_vector(maximum_follow_up_years)
+  dbc::assert_is_integer_nonNA_vector(observation_years)
+  time_scale_names <- c(entry_year_col_nm, exit_year_col_nm)
+  dbc::assert_is_data_table_with_required_names(
+    x,
+    required_names = time_scale_names
+  )
+
+  # handle by & subset ---------------------------------------------------------
+  subset <- handle_subset_arg(dataset = x)
+  by <- handle_by_arg(
+    by = by, dataset = x, subset = subset, subset_style = subset_style
+  )
+
+  window_labels <- paste0("0 - ", maximum_follow_up_years - 1L)
+  window_labels[window_labels == "0 - 0"] <- "0"
+  by <- list(
+    by = by,
+    year_difference_group = factor(window_labels, levels = window_labels)
+  )
+  if (is.null(by[["by"]])) {
+    by["by"] <- NULL
+  }
+  by <- level_space_list_to_level_space_data_table(by)
+
+  # working dataset ---------------------------------------------------------
+  dt <- data.table::setDT(list(
+    first_year = x[[entry_year_col_nm]],
+    last_year = x[[exit_year_col_nm]]
+  ))
+  data.table::set(
+    x = dt,
+    j = "year_difference",
+    value = x[[exit_year_col_nm]] - x[[entry_year_col_nm]]
+  )
+  data.table::set(
+    x = dt, j = "year_difference_group",
+    value = by[["year_difference_group"]][1L]
+  )
+  stratum_col_nms <- setdiff(names(by), "year_difference_group")
+  if (length(stratum_col_nms) > 0L) {
+    data.table::set(
+      dt,
+      j = stratum_col_nms,
+      value = mget(stratum_col_nms, envir = as.environment(x))
+    )
+  }
+
+  # counts ---------------------------------------------------------------------
+  fut_breaks <- c(0, maximum_follow_up_years)
+  count_dt <- data.table::rbindlist(
+    lapply(seq_along(observation_years), function(i) {
+      obs_y <- observation_years[i]
+      data.table::set(
+        x = dt,
+        j = "in_follow_up_at_obs_y",
+        value = data.table::between( # [a, b) bounds
+          obs_y, dt[["first_year"]], dt[["last_year"]] - 1L, incbounds = TRUE
+        )
+      )
+      data.table::set(
+        x = dt,
+        j = "year_difference_group",
+        value = cut(
+          obs_y - dt[["first_year"]],
+          breaks = fut_breaks,
+          right = FALSE,
+          labels = window_labels
+        )
+      )
+      select <- dt[["in_follow_up_at_obs_y"]]
+
+      if (is.logical(subset)) {
+        subset <- subset & select
+      } else if (is.integer(subset)) {
+        subset <- intersect(subset, which(select))
+      } else if (is.null(subset)) {
+        subset <- select
+      } else {
+        stop("internal error: subset not logical, integer, nor NULL")
+      }
+      count_dt <- stat_count(
+        x = dt, by = by, subset = subset, subset_style = subset_style
+      )
+      data.table::set(count_dt, j = "observation_year",
+                      value = obs_y)
+      count_dt[]
+
+    })
+  )
+
+  # final touches --------------------------------------------------------------
+  nonvalue_col_nms <- c(
+    stratum_col_nms, "observation_year", "year_difference_group"
+  )
+  all_col_nms <- c(nonvalue_col_nms, "N")
+  data.table::setcolorder(count_dt, all_col_nms)
+  data.table::setkeyv(count_dt, nonvalue_col_nms)
+  N <- NULL # to appease R CMD CHECK
+  count_dt[
+    j = "N" := cumsum(N),
+    by = eval(setdiff(nonvalue_col_nms, "year_difference_group"))
+  ]
+  data.table::setnames(count_dt, "year_difference_group",
+                       "full_years_since_entry")
+  return(count_dt[])
+}
 
 
+#' @title Year-Based Prevalence
+#' @name year_based_prevalence
+#' @description
+#' Compute prevalent records and subjects using only year-level information.
+#'
+#' @param x `[data.table]` (mandatory, no default)
+#'
+#' dataset containing one or more records by subject
+#' @template arg_by
+#' @param entry_year_col_nm `[character]` (mandatory, no default)
+#'
+#' name of column in `x` for the year of entry into follow-up
+#' @param exit_year_col_nm `[character]` (mandatory, no default)
+#'
+#' name of column in `x` for the year of exit from follow-up
+#' @param observation_years `[observation_years]` (mandatory, no default)
+#'
+#' vector of years; the number of prevalent cases / subjects is computed
+#' for the **ends** of these years; e.g. if a person exits follow-up in the
+#' year of observation, this presumably occurs before the last millisecond
+#' of that year, and is **not** considered to be prevalent for that
+#' `observation_years` value; see also **Details**
+#' @param maximum_follow_up_years `[integer]`
+#' (mandatory, default `c(1L, 3L, 5L, 1e3L)`)
+#'
+#' each element of `maximum_follow_up_years` defines the upper limit of a window
+#' of follow-up; this is intended to stratify (or filter out) observations
+#' based on how long ago they entered follow-up relative to an individual
+#' point of observation (see `observation_years`); each element of this argument
+#' is a exclusive upper limit of an interval (`[a, b[`); e.g. with
+#' `observation_years = 2010L` and `maximum_follow_up_years = 1L` an observation
+#' is only considered prevalent if it entered follow-up in 2010 (not 2009,
+#' and certainly not 2011); see also **Details**
+#' @details
+#'
+#' The following logic determines whether a record is prevalent at a specific
+#' observation year:
+#'
+#' ```
+#' entry_year <= observation_year < exit_year
+#' ```
+#'
+#' Additionally, e.g. one-year prevalence is computed by supplying
+#' `maximum_follow_up_years = 1L`. To generalise, an observation belongs to
+#' the n-year prevalence group if
+#'
+#' ```
+#' (observation_year - entry_year) < n
+#' ```
+#'
+#' Therefore, e.g. an observation is in the one-year prevalence group if
+#' `observation_year - entry_year  < 1`, e.g. `2020 - 2020 = 0 < 1`.
+#' @examples
+#' library("data.table")
+#' my_dataset <- data.table::data.table(
+#'   id = 1:4,
+#'   sex = c(1L, 1L, 2L, 2L),
+#'   entry_year = 2000:2003,
+#'   exit_year = 2000:2003 + 1:4
+#' )
+#'
+#' # NOTE: person that entered in 2003 _is_ counted, person that left in 2003
+#' # is _not_ counted
+#' stat_year_based_prevalent_record_count(
+#'   x = my_dataset,
+#'   entry_year_col_nm = "entry_year",
+#'   exit_year_col_nm = "exit_year",
+#'   maximum_follow_up_years = c(1L, 3L, 5L, 100L),
+#'   by = "sex",
+#'   observation_years = 2003L
+#' )
+#'
+#' @importFrom data.table setDT set rbindlist setcolorder setkeyv between
+#' @importFrom dbc assert_is_character_nonNA_atom
+#' assert_is_number_nonNA_vector assert_is_data_table_with_required_names
+#' @export
+stat_year_based_prevalent_record_count <- function(
+  x,
+  entry_year_col_nm,
+  exit_year_col_nm,
+  observation_years,
+  maximum_follow_up_years = c(1L, 3L, 5L, 1e3L),
+  by = NULL,
+  subset = NULL,
+  subset_style = "zeros"
+) {
+  fun_nm <- "stat_year_based_prevalence_count"
+  do.call(fun_nm, mget(names(formals(fun_nm))))
+}
 
+
+#' @param subject_id_col_nm `[character]` (mandatory, no default)
+#'
+#' name of column in `x` which identifies subjects; one subject
+#' may have one or more rows in `x`
+#' @rdname year_based_prevalence
+#' @export
+stat_year_based_prevalent_subject_count <- function(
+  x,
+  entry_year_col_nm,
+  exit_year_col_nm,
+  observation_years,
+  subject_id_col_nm,
+  maximum_follow_up_years = c(1L, 3L, 5L, 1e3L),
+  by = NULL,
+  subset = NULL,
+  subset_style = "zeros"
+) {
+  dbc::assert_is_character_nonNA_atom(subject_id_col_nm)
+  dbc::assert_is_data_table_with_required_names(
+    x,
+    required_names = subject_id_col_nm
+  )
+  select <- !duplicated(x, by = subject_id_col_nm)
+  if (is.logical(subset)) {
+    subset <- subset & select
+  } else if (is.integer(subset)) {
+    subset <- intersect(subset, which(select))
+  } else if (is.null(subset)) {
+    subset <- select
+  } else {
+    stop("internal error: subset not logical, integer, nor NULL")
+  }
+  fun_nm <- "stat_year_based_prevalence_count"
+  do.call(fun_nm, mget(names(formals(fun_nm))))
+}
 
 
 
