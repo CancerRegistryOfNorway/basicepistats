@@ -445,6 +445,8 @@ stat_year_based_prevalence_count <- function(
 #' `observation_years = 2010L` and `maximum_follow_up_years = 1L` an observation
 #' is only considered prevalent if it entered follow-up in 2010 (not 2009,
 #' and certainly not 2011); see also **Details**
+#' @template arg_subset
+#' @template arg_subset_style
 #' @details
 #'
 #' The following logic determines whether a record is prevalent at a specific

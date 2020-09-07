@@ -75,6 +75,26 @@ column; the \code{list} is turned into a \code{data.table} and that is used as i
 you had supplied a \code{data.table}
 }}
 
+\item{subset}{\verb{[NULL, integer, logical]} (optional, default \code{NULL})
+\itemize{
+\item \code{NULL}: no subsetting, i.e. use whole dataset
+\item \code{integer}: subset to these rows before computations;
+\code{NA} values throw a warning and are not included
+\item \code{logical}: subset to rows where this is \code{TRUE} before computing counts;
+\code{NA} values throw a warning and are not included; the \code{logical} vector
+must have as many elements as the dataset has rows
+}}
+
+\item{subset_style}{\verb{[character]} (optional, default \code{"zeros"})
+\itemize{
+\item \code{"zeros"}: every combination of stratifying columns supplied via \code{by}
+(or existing in data \emph{before} subsetting, if \code{by}
+is \code{NULL}) will be included in output, but strata outside the subset
+will have zero counts
+\item \code{"drop"}: output will not have strata that are not in the subset
+(zero counts are impossible)
+}}
+
 \item{subject_id_col_nm}{\verb{[character]} (mandatory, no default)
 
 name of column in \code{x} which identifies subjects; one subject
