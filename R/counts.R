@@ -143,7 +143,7 @@ stat_expr <- function(
     value_col_nms <- setdiff(names(result_dt), stratum_col_nms)
     result_dt <- enforce_level_space(
       x = result_dt,
-      value_col_nms = ,
+      value_col_nms = value_col_nms,
       fill = 0L,
       joint_column_level_space = by
     )
