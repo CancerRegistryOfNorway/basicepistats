@@ -54,7 +54,7 @@ stat_count <- function(
 ) {
   stat_expr(
     x = x,
-    expr = quote(.N),
+    expr = quote(list(N = .N)),
     by = by,
     subset = subset,
     subset_style = subset_style
@@ -85,7 +85,7 @@ stat_unique_count <- function(
   )
   stat_expr(
     x = x,
-    expr = substitute(uniqueN(.SD, by = UB), list(UB = unique_by)),
+    expr = substitute(list(N = uniqueN(.SD, by = UB)), list(UB = unique_by)),
     by = by,
     subset = subset,
     subset_style = subset_style
@@ -97,7 +97,7 @@ stat_unique_count <- function(
 #' @importFrom dbc assert_is_data_table assert_atom_is_in_set
 stat_expr <- function(
   x,
-  expr = quote(.N),
+  expr = quote(list(N = .N)),
   by = NULL,
   subset = NULL,
   subset_style = "zeros"
@@ -132,13 +132,22 @@ stat_expr <- function(
     x_expr[["keyby"]] <- stratum_col_nms
   }
   result_dt <- eval(x_expr)
+  if (!inherits(result_dt, "data.table")) {
+    stop("basicepistas internal error: ",
+         "result of expression ", as.character(x_expr), " did ",
+         "not evaluate to a data.table; if you see this, complain to the ",
+         "author or maintainer of the function you just used")
+  }
 
-  result_dt <- enforce_level_space(
-    x = result_dt,
-    value_col_nms = setdiff(names(result_dt), stratum_col_nms),
-    fill = 0L,
-    joint_column_level_space = by
-  )
+  if (length(stratum_col_nms) > 0L) {
+    value_col_nms <- setdiff(names(result_dt), stratum_col_nms)
+    result_dt <- enforce_level_space(
+      x = result_dt,
+      value_col_nms = ,
+      fill = 0L,
+      joint_column_level_space = by
+    )
+  }
   # set_stat_table(
   #   result_dt,
   #   stratum_col_nms = names(by),
