@@ -3,12 +3,24 @@
 \name{counts}
 \alias{counts}
 \alias{stat_count}
+\alias{stat_count_}
 \alias{stat_unique_count}
+\alias{stat_unique_count_}
 \title{Counts}
 \usage{
 stat_count(x, by = NULL, subset = NULL, subset_style = c("zeros", "drop")[1])
 
+stat_count_(x, by = NULL, subset = NULL, subset_style = c("zeros", "drop")[1])
+
 stat_unique_count(
+  x,
+  unique_by,
+  by = NULL,
+  subset = NULL,
+  subset_style = c("zeros", "drop")[1]
+)
+
+stat_unique_count_(
   x,
   unique_by,
   by = NULL,
@@ -64,12 +76,25 @@ Produce a stratified count table.
 }
 \details{
 \itemize{
-\item \code{stat_count} produces the number of records by strata.
+\item \code{stat_count} produces the number of records by strata; this function is
+intended to be used directly by the end-user
+}
+
+\itemize{
+\item \code{stat_count_} produces the number of records by strata; this function is
+intended to be used inside other functions.
 }
 
 \itemize{
 \item \code{stat_unique_count} produces the number of unique combinations of columns
-defined in \code{unique_by}; e.g. the number of unique subjects by strata.
+defined in \code{unique_by}; e.g. the number of unique subjects by strata;
+this function is intended to be used directly by the end-user
+}
+
+\itemize{
+\item \code{stat_unique_count_} produces the number of unique combinations of columns
+defined in \code{unique_by}; e.g. the number of unique subjects by strata;
+this function is intended to be used inside other functions
 }
 }
 \examples{

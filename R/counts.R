@@ -44,7 +44,8 @@ NULL
 
 #' @rdname counts
 #' @details
-#' - `stat_count` produces the number of records by strata.
+#' - `stat_count` produces the number of records by strata; this function is
+#'   intended to be used directly by the end-user
 #' @export
 stat_count <- function(
   x,
@@ -52,7 +53,12 @@ stat_count <- function(
   subset = NULL,
   subset_style = c("zeros", "drop")[1]
 ) {
-  stat_expr(
+  dbc::assert_user_input_is_data_table(x)
+  assert_user_input_by(by)
+  assert_user_input_subset(subset, nrow(x))
+  assert_user_input_subset_style(subset_style)
+
+  stat_expr_(
     x = x,
     expr = quote(list(N = .N)),
     by = by,
@@ -61,6 +67,25 @@ stat_count <- function(
   )
 }
 
+#' @rdname counts
+#' @details
+#' - `stat_count_` produces the number of records by strata; this function is
+#'   intended to be used inside other functions.
+#' @export
+stat_count_ <- function(
+  x,
+  by = NULL,
+  subset = NULL,
+  subset_style = c("zeros", "drop")[1]
+) {
+  stat_expr_(
+    x = x,
+    expr = quote(list(N = .N)),
+    by = by,
+    subset = subset,
+    subset_style = subset_style
+  )
+}
 
 #' @rdname counts
 #' @param unique_by `[character]` (mandatory, no default)
@@ -69,7 +94,8 @@ stat_count <- function(
 #' e.g. `unique_by = "my_subject_id"` to count numbers of subjects by strata
 #' @details
 #' - `stat_unique_count` produces the number of unique combinations of columns
-#'   defined in `unique_by`; e.g. the number of unique subjects by strata.
+#'   defined in `unique_by`; e.g. the number of unique subjects by strata;
+#'   this function is intended to be used directly by the end-user
 #' @export
 stat_unique_count <- function(
   x,
@@ -78,12 +104,49 @@ stat_unique_count <- function(
   subset = NULL,
   subset_style = c("zeros", "drop")[1]
 ) {
-  dbc::assert_is_character_nonNA_vector(unique_by)
-  dbc::assert_is_data_table_with_required_names(
+  assert_user_input_by(by)
+  assert_user_input_subset(subset, nrow(x))
+  assert_user_input_subset_style(subset_style)
+  dbc::assert_user_input_is_character_nonNA_vector(unique_by)
+  dbc::assert_user_input_is_data_table_with_required_names(
     x,
     required_names = unique_by
   )
-  stat_expr(
+  stat_unique_count_(
+    x = x,
+    unique_by = unique_by,
+    by = by,
+    subset = subset,
+    subset_style = subset_style
+  )
+}
+
+#' @rdname counts
+#' @param unique_by `[character]` (mandatory, no default)
+#'
+#' names of columns in `x`; unique combinations of these columns are counted;
+#' e.g. `unique_by = "my_subject_id"` to count numbers of subjects by strata
+#' @details
+#' - `stat_unique_count_` produces the number of unique combinations of columns
+#'   defined in `unique_by`; e.g. the number of unique subjects by strata;
+#'   this function is intended to be used inside other functions
+#' @export
+stat_unique_count_ <- function(
+  x,
+  unique_by,
+  by = NULL,
+  subset = NULL,
+  subset_style = c("zeros", "drop")[1]
+) {
+  assert_prod_input_by(by)
+  assert_prod_input_subset(subset, nrow(x))
+  assert_prod_input_subset_style(subset_style)
+  dbc::assert_prod_input_is_character_nonNA_vector(unique_by)
+  dbc::assert_prod_input_is_data_table_with_required_names(
+    x,
+    required_names = unique_by
+  )
+  stat_expr_(
     x = x,
     expr = substitute(list(N = uniqueN(.SD, by = UB)), list(UB = unique_by)),
     by = by,
@@ -92,26 +155,22 @@ stat_unique_count <- function(
   )
 }
 
-
 #' @importFrom data.table setkeyv .N := is.data.table
-#' @importFrom dbc assert_is_data_table assert_atom_is_in_set
-stat_expr <- function(
+#' @importFrom dbc assert_prod_input_is_data_table
+#' assert_prod_input_has_one_of_classes
+stat_expr_ <- function(
   x,
   expr = quote(list(N = .N)),
   by = NULL,
   subset = NULL,
   subset_style = "zeros"
 ) {
-  dbc::assert_is_data_table(x)
-  stopifnot(
-    inherits(expr, c("call", "name"))
-  )
+  dbc::assert_prod_input_is_data_table(x)
+  dbc::assert_prod_input_has_one_of_classes(expr, classes = c("call", "name"))
+  assert_prod_input_by(x)
+  assert_prod_input_subset(subset, nrow(x))
+  assert_prod_input_subset_style(subset_style)
   subset <- handle_subset_arg(dataset = x)
-  dbc::assert_atom_is_in_set(
-    x = subset_style,
-    x_nm = "subset_style",
-    set = c("zeros", "drop")
-  )
   by <- handle_by_arg(
     by = by,
     dataset = x,

@@ -24,8 +24,8 @@
 level_space_list_to_level_space_data_table <- function(
   x
 ) {
-  dbc::assert_is_list(x)
-  dbc::assert_is_uniquely_named(x)
+  dbc::assert_prod_input_is_list(x)
+  dbc::assert_prod_input_is_uniquely_named(x)
   stopifnot(
     vapply(x,
            function(elem) {is.vector(x) || data.table::is.data.table(x)},
@@ -70,13 +70,13 @@ enforce_level_space <- function(
   fill = 0L,
   joint_column_level_space
 ) {
-  dbc::assert_is_character_nonNA_vector(value_col_nms)
-  dbc::assert_is_data_table_with_required_names(
+  dbc::assert_prod_input_is_character_nonNA_vector(value_col_nms)
+  dbc::assert_prod_input_is_data_table_with_required_names(
     x,
     required_names = c(value_col_nms, names(joint_column_level_space))
   )
-  dbc::assert_is_number_nonNA_vector(fill)
-  dbc::assert_is_data_table(joint_column_level_space)
+  dbc::assert_prod_input_is_number_nonNA_vector(fill)
+  dbc::assert_prod_input_is_data_table(joint_column_level_space)
 
   if (length(fill) == 1L) {
     fill <- rep(fill, length(value_col_nms))
@@ -112,14 +112,14 @@ handle_subset_arg <- function(
   enclosing_env = parent.frame(2L),
   function_call = sys.call(1L)
 ) {
-  dbc::assert_is_character_nonNA_atom(subset_arg_nm)
-  dbc::assert_has_one_of_classes(
+  dbc::assert_prod_input_is_character_nonNA_atom(subset_arg_nm)
+  dbc::assert_prod_input_has_one_of_classes(
     dataset, classes = c("data.frame", "environment")
   )
-  dbc::assert_has_class(
+  dbc::assert_prod_input_has_class(
     function_env, required_class = "environment"
   )
-  dbc::assert_has_class(
+  dbc::assert_prod_input_has_class(
     enclosing_env, required_class = "environment"
   )
   stopifnot(
@@ -142,11 +142,11 @@ handle_subset_arg <- function(
   subset_value <- eval(subset_expr, envir = value_eval_env)
 
   subset_expr_text <- paste0(deparse(subset_expr), collapse = "")
-  dbc::assert_is_one_of(
+  dbc::assert_prod_interim_is_one_of(
     subset_value,
     x_nm = subset_expr_text,
-    fun_nms = c("assert_is_NULL", "assert_is_logical_vector",
-                "assert_is_number_vector")
+    funs = c("report_is_NULL", "report_is_logical_vector",
+             "report_is_number_vector")
   )
 
   if (anyNA(subset_value)) {
@@ -187,15 +187,11 @@ handle_subset_arg <- function(
 
 
 #' @importFrom data.table is.data.table .SD setkeyv
-#' @importFrom dbc assert_is_one_of
+#' @importFrom dbc
 #' assert_is_data_table_with_required_names
 handle_by_arg <- function(by, dataset, subset, subset_style) {
   # returns a data.table usually but NULL if by = NULL.
-  dbc::assert_is_one_of(
-    by,
-    fun_nms = c("assert_is_data_table", "assert_is_character_nonNA_vector",
-                "assert_is_list", "assert_is_NULL")
-  )
+  assert_prod_input_by(by)
   if (data.table::is.data.table(by)) {
     dbc::assert_is_data_table_with_required_names(
       x = dataset, required_names = names(by)
@@ -234,6 +230,84 @@ handle_by_arg <- function(by, dataset, subset, subset_style) {
   return(by)
 }
 
+#' @importFrom dbc report_is_character_nonNA_atom report_atom_is_in_set
+report_user_input_subset_style <- function(x) {
+  rbind(
+    dbc::report_is_character_nonNA_atom(x, x_nm = "subset_style"),
+    dbc::report_atom_is_in_set(
+      x, x_nm = "subset_style", set = c("zeros", "drop")
+    )
+  )
+}
+#' @importFrom dbc report_to_assertion
+assert_user_input_subset_style <- function(x) {
+  dbc::report_to_assertion(report_user_input_subset_style(x),
+                           assertion_type = "user_input")
+}
+#' @importFrom dbc report_to_assertion
+assert_prod_input_subset_style <- function(x) {
+  dbc::report_to_assertion(report_user_input_subset_style(x),
+                           assertion_type = "prod_input")
+}
 
 
+#' @importFrom dbc report_is_character_nonNA_atom report_atom_is_in_set
+report_user_input_subset <- function(x, n_dataset_rows) {
+  report_df <- rbind(
+    dbc::report_has_one_of_classes(
+      x = x, x_nm = "subset",
+      classes = c("NULL", "integer", "logical")
+    )
+  )
+  if (inherits(x, "logical")) {
+    report_df <- rbind(
+      report_df,
+      dbc::report_is_of_length(
+        x = x, x_nm = "subset",
+        expected_length = n_dataset_rows
+      )
+    )
+  } else if (inherits(x, "integer")) {
+    report_df <- rbind(
+      report_df,
+      dbc::report_is_between_inclusive(
+        x = x,
+        x_nm = "subset",
+        lo = -n_data_rows,
+        hi = n_data_rows
+      )
+    )
+  }
+  return(report_df)
+}
+#' @importFrom dbc report_to_assertion
+assert_user_input_subset <- function(x, n_dataset_rows) {
+  dbc::report_to_assertion(report_user_input_subset(x, n_dataset_rows),
+                           assertion_type = "user_input")
+}
+#' @importFrom dbc report_to_assertion
+assert_prod_input_subset <- function(x, n_dataset_rows) {
+  dbc::report_to_assertion(report_user_input_subset(x, n_dataset_rows),
+                           assertion_type = "prod_input")
+}
+
+
+#' @importFrom dbc assert_prod_input_is_one_of
+assert_prod_input_by <- function(x) {
+  dbc::assert_prod_input_is_one_of(
+    x,
+    x_nm = "by",
+    funs = c("report_is_data_table", "report_is_character_nonNA_vector",
+             "report_is_list", "report_is_NULL")
+  )
+}
+#' @importFrom dbc assert_user_input_is_one_of
+assert_user_input_by <- function(x) {
+  dbc::assert_user_input_is_one_of(
+    x,
+    x_nm = "by",
+    funs = c("report_is_data_table", "report_is_character_nonNA_vector",
+             "report_is_list", "report_is_NULL")
+  )
+}
 
