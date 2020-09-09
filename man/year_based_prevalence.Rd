@@ -4,6 +4,7 @@
 \alias{year_based_prevalence}
 \alias{stat_year_based_prevalent_record_count}
 \alias{stat_year_based_prevalent_subject_count}
+\alias{stat_year_based_prevalent_subject_count_}
 \title{Year-Based Prevalence}
 \usage{
 stat_year_based_prevalent_record_count(
@@ -18,6 +19,18 @@ stat_year_based_prevalent_record_count(
 )
 
 stat_year_based_prevalent_subject_count(
+  x,
+  entry_year_col_nm,
+  exit_year_col_nm,
+  observation_years,
+  subject_id_col_nm,
+  maximum_follow_up_years = c(1L, 3L, 5L, 1000L),
+  by = NULL,
+  subset = NULL,
+  subset_style = "zeros"
+)
+
+stat_year_based_prevalent_subject_count_(
   x,
   entry_year_col_nm,
   exit_year_col_nm,
@@ -115,6 +128,16 @@ the n-year prevalence group if\preformatted{(observation_year - entry_year) < n
 
 Therefore, e.g. an observation is in the one-year prevalence group if
 \code{observation_year - entry_year  < 1}, e.g. \code{2020 - 2020 = 0 < 1}.
+
+\itemize{
+\item \code{stat_year_based_prevalent_subject_count}: intended for use directly by
+the end-user
+}
+
+\itemize{
+\item \code{stat_year_based_prevalent_subject_count_}: intended for use inside other
+functions
+}
 }
 \examples{
 library("data.table")

@@ -3,6 +3,7 @@
 \name{prevalence}
 \alias{prevalence}
 \alias{stat_prevalent_record_count}
+\alias{stat_prevalent_subject_count_}
 \alias{stat_prevalent_subject_count}
 \title{Prevalence}
 \usage{
@@ -10,6 +11,18 @@ stat_prevalent_record_count(
   x,
   follow_up_time_col_nm,
   follow_up_time_window_widths = Inf,
+  by = NULL,
+  subset = NULL,
+  subset_style = "zeros",
+  observation_time_points,
+  entry_time_col_nm
+)
+
+stat_prevalent_subject_count_(
+  x,
+  follow_up_time_col_nm,
+  follow_up_time_window_widths = Inf,
+  subject_id_col_nm,
   by = NULL,
   subset = NULL,
   subset_style = "zeros",
@@ -126,9 +139,17 @@ in the counts
 }
 
 \itemize{
+\item \code{stat_prevalent_subject_count_}: counts subject prevalence; if one subject
+has multiple records, it is included in the counts only once and not
+as many times as it has records; this function intended for use inside other
+functions
+}
+
+\itemize{
 \item \code{stat_prevalent_subject_count}: counts subject prevalence; if one subject
 has multiple records, it is included in the counts only once and not
-as many times as it has records
+as many times as it has records; this function intended for use directly
+by the end-user
 }
 }
 \examples{

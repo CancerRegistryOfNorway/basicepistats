@@ -193,12 +193,12 @@ handle_by_arg <- function(by, dataset, subset, subset_style) {
   # returns a data.table usually but NULL if by = NULL.
   assert_prod_input_by(by)
   if (data.table::is.data.table(by)) {
-    dbc::assert_is_data_table_with_required_names(
+    dbc::assert_prod_input_is_data_table_with_required_names(
       x = dataset, required_names = names(by)
     )
   } else if (inherits(by, "list")) {
     by <- level_space_list_to_level_space_data_table(by)
-    dbc::assert_is_data_table_with_required_names(
+    dbc::assert_prod_interim_is_data_table_with_required_names(
       x = dataset, required_names = names(by)
     )
   } else if (is.character(by)) {

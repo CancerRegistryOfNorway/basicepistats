@@ -122,13 +122,13 @@ stat_prevalence_count <- function(
   entry_time_col_nm
 ) {
   # assertions -----------------------------------------------------------------
-  dbc::assert_is_character_nonNA_atom(follow_up_time_col_nm)
-  dbc::assert_is_number_nonNA_vector(follow_up_time_window_widths)
-  dbc::assert_is_character_nonNA_atom(entry_time_col_nm)
-  dbc::assert_is_nonNA(observation_time_points)
-  dbc::assert_is_vector(observation_time_points)
+  dbc::assert_prod_input_is_character_nonNA_atom(follow_up_time_col_nm)
+  dbc::assert_prod_input_is_number_nonNA_vector(follow_up_time_window_widths)
+  dbc::assert_prod_input_is_character_nonNA_atom(entry_time_col_nm)
+  dbc::assert_prod_input_is_nonNA(observation_time_points)
+  dbc::assert_prod_input_is_vector(observation_time_points)
   time_scale_names <- c(follow_up_time_col_nm, entry_time_col_nm)
-  dbc::assert_is_data_table_with_required_names(
+  dbc::assert_prod_input_is_data_table_with_required_names(
     x,
     required_names = time_scale_names
   )
@@ -234,9 +234,10 @@ stat_prevalence_count <- function(
 
 #' @rdname prevalence
 #' @details
-#' - `stat_prevalent_subject_count`: counts subject prevalence; if one subject
+#' - `stat_prevalent_subject_count_`: counts subject prevalence; if one subject
 #'  has multiple records, it is included in the counts only once and not
-#'  as many times as it has records
+#'  as many times as it has records; this function intended for use inside other
+#'  functions
 #' @export
 #' @examples
 #' library("data.table")
@@ -257,7 +258,7 @@ stat_prevalence_count <- function(
 #'   entry_time_col_nm = "calendar_time"
 #' )
 #'
-stat_prevalent_subject_count <- function(
+stat_prevalent_subject_count_ <- function(
   x,
   follow_up_time_col_nm,
   follow_up_time_window_widths = Inf,
@@ -268,8 +269,8 @@ stat_prevalent_subject_count <- function(
   observation_time_points,
   entry_time_col_nm
 ) {
-  dbc::assert_is_character_nonNA_atom(subject_id_col_nm)
-  dbc::assert_is_data_table_with_required_names(
+  dbc::assert_prod_input_is_character_nonNA_atom(subject_id_col_nm)
+  dbc::assert_prod_input_is_data_table_with_required_names(
     x,
     required_names = subject_id_col_nm
   )
@@ -286,7 +287,41 @@ stat_prevalent_subject_count <- function(
   do.call(stat_prevalence_count, mget(names(formals(stat_prevalence_count))))
 }
 
+#' @rdname prevalence
+#' @details
+#' - `stat_prevalent_subject_count`: counts subject prevalence; if one subject
+#'  has multiple records, it is included in the counts only once and not
+#'  as many times as it has records; this function intended for use directly
+#'  by the end-user
+#' @export
+stat_prevalent_subject_count <- function(
+  x,
+  follow_up_time_col_nm,
+  follow_up_time_window_widths = Inf,
+  subject_id_col_nm,
+  by = NULL,
+  subset = NULL,
+  subset_style = "zeros",
+  observation_time_points,
+  entry_time_col_nm
+) {
+  dbc::assert_user_input_is_data.table(x)
+  dbc::assert_user_input_is_character_nonNA_atom(follow_up_time_col_nm)
+  dbc::assert_user_input_is_number_nonNA_vector(follow_up_time_window_widths)
+  dbc::assert_user_input_is_character_nonNA_atom(subject_id_col_nm)
+  dbc::assert_user_input_is_character_nonNA_atom(entry_time_col_nm)
+  dbc::assert_user_input_is_data.table_with_required_names(
+    x,
+    required_names = c(follow_up_time_col_nm, subject_id_col_nm,
+                       entry_time_col_nm)
+  )
+  assert_user_input_by(by)
+  assert_user_input_subset(subset, nrow(x))
+  assert_user_input_subset_style(subset_style)
 
+  do.call(stat_prevalent_subject_count_,
+          mget(names(formals(stat_prevalent_subject_count_))))
+}
 
 
 
@@ -301,12 +336,12 @@ stat_year_based_prevalence_count <- function(
   subset_style = "zeros"
 ) {
   # assertions -----------------------------------------------------------------
-  dbc::assert_is_character_nonNA_atom(entry_year_col_nm)
-  dbc::assert_is_character_nonNA_atom(exit_year_col_nm)
-  dbc::assert_is_integer_nonNA_vector(maximum_follow_up_years)
-  dbc::assert_is_integer_nonNA_vector(observation_years)
+  dbc::assert_prod_input_is_character_nonNA_atom(entry_year_col_nm)
+  dbc::assert_prod_input_is_character_nonNA_atom(exit_year_col_nm)
+  dbc::assert_prod_input_is_integer_nonNA_vector(maximum_follow_up_years)
+  dbc::assert_prod_input_is_integer_nonNA_vector(observation_years)
   time_scale_names <- c(entry_year_col_nm, exit_year_col_nm)
-  dbc::assert_is_data_table_with_required_names(
+  dbc::assert_prod_input_is_data_table_with_required_names(
     x,
     required_names = time_scale_names
   )
@@ -505,11 +540,10 @@ stat_year_based_prevalent_record_count <- function(
 }
 
 
-#' @param subject_id_col_nm `[character]` (mandatory, no default)
-#'
-#' name of column in `x` which identifies subjects; one subject
-#' may have one or more rows in `x`
 #' @rdname year_based_prevalence
+#' @details
+#' - `stat_year_based_prevalent_subject_count`: intended for use directly by
+#'   the end-user
 #' @export
 stat_year_based_prevalent_subject_count <- function(
   x,
@@ -522,8 +556,44 @@ stat_year_based_prevalent_subject_count <- function(
   subset = NULL,
   subset_style = "zeros"
 ) {
-  dbc::assert_is_character_nonNA_atom(subject_id_col_nm)
-  dbc::assert_is_data_table_with_required_names(
+  dbc::assert_user_input_is_data.table(x)
+  dbc::assert_user_input_is_character_nonNA_atom(subject_id_col_nm)
+  dbc::assert_user_input_is_data.table_with_required_names(
+    x,
+    required_names = c(subject_id_col_nm, entry_year_col_nm, exit_year_col_nm)
+  )
+  dbc::assert_user_input_is_integer_nonNA_vector(observation_years)
+  dbc::assert_user_input_is_integer_nonNA_gtzero_vector(maximum_follow_up_years)
+  assert_user_input_by(by)
+  assert_user_input_subset(subset, nrow(x))
+  assert_user_input_subset_style(subset_style)
+
+  do.call(stat_year_based_prevalent_subject_count_,
+          mget(names(formals(stat_year_based_prevalent_subject_count_))))
+}
+
+#' @param subject_id_col_nm `[character]` (mandatory, no default)
+#'
+#' name of column in `x` which identifies subjects; one subject
+#' may have one or more rows in `x`
+#' @rdname year_based_prevalence
+#' @details
+#' - `stat_year_based_prevalent_subject_count_`: intended for use inside other
+#'   functions
+#' @export
+stat_year_based_prevalent_subject_count_ <- function(
+  x,
+  entry_year_col_nm,
+  exit_year_col_nm,
+  observation_years,
+  subject_id_col_nm,
+  maximum_follow_up_years = c(1L, 3L, 5L, 1e3L),
+  by = NULL,
+  subset = NULL,
+  subset_style = "zeros"
+) {
+  dbc::assert_prod_input_is_character_nonNA_atom(subject_id_col_nm)
+  dbc::assert_prod_input_is_data_table_with_required_names(
     x,
     required_names = subject_id_col_nm
   )
