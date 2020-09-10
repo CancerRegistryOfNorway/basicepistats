@@ -273,8 +273,8 @@ report_user_input_subset <- function(x, n_dataset_rows) {
       dbc::report_is_between_inclusive(
         x = x,
         x_nm = "subset",
-        lo = -n_data_rows,
-        hi = n_data_rows
+        lo = -n_dataset_rows,
+        hi = n_dataset_rows
       )
     )
   }
