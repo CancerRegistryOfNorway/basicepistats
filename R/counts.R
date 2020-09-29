@@ -47,6 +47,7 @@ NULL
 #' - `stat_count` produces the number of records by strata; this function is
 #'   intended to be used directly by the end-user
 #' @export
+#' @importFrom data.table .N
 stat_count <- function(
   x,
   by = NULL,
@@ -155,9 +156,7 @@ stat_unique_count_ <- function(
   )
 }
 
-#' @importFrom data.table setkeyv .N := is.data.table
-#' @importFrom dbc assert_prod_input_is_data_table
-#' assert_prod_input_has_one_of_classes
+#' @importFrom data.table .N
 stat_expr_ <- function(
   x,
   expr = quote(list(N = .N)),

@@ -107,10 +107,7 @@ stat_prevalent_record_count <- function(
   do.call(stat_prevalence_count, mget(names(formals(stat_prevalence_count))))
 }
 
-
-#' @importFrom data.table setDT set rbindlist setcolorder setkeyv between
-#' @importFrom dbc assert_is_character_nonNA_atom
-#' assert_is_number_nonNA_vector assert_is_data_table_with_required_names
+#' @importFrom data.table :=
 stat_prevalence_count <- function(
   x,
   follow_up_time_col_nm,
@@ -324,7 +321,7 @@ stat_prevalent_subject_count <- function(
 }
 
 
-
+#' @importFrom data.table :=
 stat_year_based_prevalence_count <- function(
   x,
   entry_year_col_nm,
@@ -521,9 +518,6 @@ stat_year_based_prevalence_count <- function(
 #'   observation_years = 2003L
 #' )
 #'
-#' @importFrom data.table setDT set rbindlist setcolorder setkeyv between
-#' @importFrom dbc assert_is_character_nonNA_atom
-#' assert_is_number_nonNA_vector assert_is_data_table_with_required_names
 #' @export
 stat_year_based_prevalent_record_count <- function(
   x,

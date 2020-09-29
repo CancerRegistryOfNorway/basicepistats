@@ -20,7 +20,6 @@
 #   area = data.table::data.table(a1 = c(1,1,1,2,2), a2 = c(1,2,3,1,2))
 # )
 # level_space_list_to_level_space_data_table(level_list)
-#' @importFrom data.table is.data.table CJ set setkeyv
 level_space_list_to_level_space_data_table <- function(
   x
 ) {
@@ -63,7 +62,6 @@ level_space_list_to_level_space_data_table <- function(
 
 
 
-#' @importFrom data.table is.data.table set
 enforce_level_space <- function(
   x,
   value_col_nms,
@@ -186,9 +184,6 @@ handle_subset_arg <- function(
 
 
 
-#' @importFrom data.table is.data.table .SD setkeyv
-#' @importFrom dbc
-#' assert_is_data_table_with_required_names
 handle_by_arg <- function(by, dataset, subset, subset_style) {
   # returns a data.table usually but NULL if by = NULL.
   assert_prod_input_by(by)
@@ -230,7 +225,6 @@ handle_by_arg <- function(by, dataset, subset, subset_style) {
   return(by)
 }
 
-#' @importFrom dbc report_is_character_nonNA_atom report_atom_is_in_set
 report_user_input_subset_style <- function(x) {
   rbind(
     dbc::report_is_character_nonNA_atom(x, x_nm = "subset_style"),
@@ -239,19 +233,17 @@ report_user_input_subset_style <- function(x) {
     )
   )
 }
-#' @importFrom dbc report_to_assertion
+
 assert_user_input_subset_style <- function(x) {
   dbc::report_to_assertion(report_user_input_subset_style(x),
                            assertion_type = "user_input")
 }
-#' @importFrom dbc report_to_assertion
+
 assert_prod_input_subset_style <- function(x) {
   dbc::report_to_assertion(report_user_input_subset_style(x),
                            assertion_type = "prod_input")
 }
 
-
-#' @importFrom dbc report_is_character_nonNA_atom report_atom_is_in_set
 report_user_input_subset <- function(x, n_dataset_rows) {
   report_df <- rbind(
     dbc::report_has_one_of_classes(
@@ -280,19 +272,17 @@ report_user_input_subset <- function(x, n_dataset_rows) {
   }
   return(report_df)
 }
-#' @importFrom dbc report_to_assertion
+
 assert_user_input_subset <- function(x, n_dataset_rows) {
   dbc::report_to_assertion(report_user_input_subset(x, n_dataset_rows),
                            assertion_type = "user_input")
 }
-#' @importFrom dbc report_to_assertion
+
 assert_prod_input_subset <- function(x, n_dataset_rows) {
   dbc::report_to_assertion(report_user_input_subset(x, n_dataset_rows),
                            assertion_type = "prod_input")
 }
 
-
-#' @importFrom dbc assert_prod_input_is_one_of
 assert_prod_input_by <- function(x) {
   dbc::assert_prod_input_is_one_of(
     x,
@@ -301,7 +291,7 @@ assert_prod_input_by <- function(x) {
              "report_is_list", "report_is_NULL")
   )
 }
-#' @importFrom dbc assert_user_input_is_one_of
+
 assert_user_input_by <- function(x) {
   dbc::assert_user_input_is_one_of(
     x,

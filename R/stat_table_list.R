@@ -26,7 +26,6 @@
 #'
 #' name of a function; must be discoverable by [match.fun]
 #' @export
-#' @importFrom data.table setattr
 #' @examples
 #' library("data.table")
 #'
@@ -81,7 +80,6 @@ stat_table_list <- function(
 }
 
 
-#' @importFrom data.table copy setattr
 #' @export
 "[.stat_table_list" <- function(x, i, ...) {
   x_meta <- data.table::copy(attr(x, "table_list_meta"))
@@ -97,7 +95,6 @@ stat_table_list <- function(
   x_subset
 }
 
-#' @importFrom data.table rbindlist setDT
 #' @export
 print.stat_table_list <- function(x, ...) {
   cat("stat_table_list of length ", length(x), "\n:")
@@ -114,7 +111,6 @@ print.stat_table_list <- function(x, ...) {
   print(dt)
 }
 
-#' @importFrom data.table copy setattr
 #' @export
 c.stat_table_list <- function(...) {
   tll <- data.table::copy(list(...))

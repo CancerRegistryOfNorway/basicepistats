@@ -21,7 +21,6 @@
 
 
 #' @rdname stat_table
-#' @importFrom data.table copy
 #' @export
 stat_table_meta <- function(x) {
   lapply(attr(x, "stat_table_meta"), intersect, y = names(x))
@@ -40,9 +39,6 @@ stat_table_value_col_nms <- function(x) {
 }
 
 #' @rdname stat_table
-#' @importFrom data.table setattr
-#' @importFrom dbc assert_is_data.frame assert_is_character_nonNA_vector
-#' assert_vector_elems_are_in_set
 #' @export
 set_stat_table <- function(x, stratum_col_nms, value_col_nms) {
   # dbc::assert_is_data.frame(x)
@@ -65,7 +61,6 @@ set_stat_table <- function(x, stratum_col_nms, value_col_nms) {
 
 #' @rdname stat_table
 #' @export
-#' @importFrom data.table copy
 stat_table <- function(x, stratum_col_nms, value_col_nms) {
   x <- data.table::copy(x)
   set_stat_table(x, stratum_col_nms, value_col_nms)
@@ -98,7 +93,6 @@ print.stat_table <- function(x, ...) {
 }
 
 #' @rdname stat_table
-#' @importFrom data.table setattr
 #' @export
 #' @param ... passed to next method (see `?"["`)
 "[.stat_table" <- function(x, ...) {
@@ -118,7 +112,6 @@ print.stat_table <- function(x, ...) {
 
 
 #' @rdname stat_table
-#' @importFrom data.table setattr
 #' @export
 #' @param value see `?"[<-"`
 #'
@@ -136,7 +129,6 @@ print.stat_table <- function(x, ...) {
 
 
 #' @rdname stat_table
-#' @importFrom data.table setattr
 #' @export
 "[[<-.stat_table" <- function(x, ..., value) {
   data.table::setattr(x, "class", setdiff(class(x), "stat_table"))
