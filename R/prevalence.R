@@ -391,7 +391,7 @@ stat_year_based_prevalence_count <- function(
       data.table::set(
         x = dt,
         j = "in_follow_up_at_obs_y",
-        value = data.table::between( # [a, b) bounds
+        value = data.table::between( # [a, b[ bounds
           obs_y, dt[["first_year"]], dt[["last_year"]] - 1L, incbounds = TRUE
         )
       )

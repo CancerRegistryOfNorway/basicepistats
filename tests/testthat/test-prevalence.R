@@ -62,3 +62,47 @@ testthat::test_that("can compute record prevalence using Dates", {
     expected = expected[["N"]]
   )
 })
+
+
+
+testthat::test_that("year-based prevalence works as intended", {
+
+
+  dt <- data.table::CJ(entry_year = 2001:2003, full_year_fut = 0:5)
+  dt[, "id" := 1:.N]
+  dt[, "exit_year" := entry_year + full_year_fut]
+  dt[, "stratum" := rep(1:2, length.out = .N)]
+
+  obs_y_set <- sort(union(dt[["entry_year"]], dt[["exit_year"]]))
+  obs_y_set <- c(obs_y_set[1L] - 1L, obs_y_set, obs_y_set[length(obs_y_set)] + 1L)
+  max_fut_year_set <- c(1L, 2L, 3L, 4L, 5L)
+  # max_fut_year_set <- 1L
+  prev_dt <- basicepistats::stat_year_based_prevalent_record_count(
+    x = dt,
+    entry_year_col_nm = "entry_year",
+    exit_year_col_nm = "exit_year",
+    observation_years = obs_y_set,
+    maximum_follow_up_years = max_fut_year_set
+  )
+
+  exp_prev_dt <- data.table::CJ(
+    exp_obs_y = obs_y_set, exp_max_fut_year = max_fut_year_set
+  )
+  for (obs_y in obs_y_set) {
+    for (max_fut_year in max_fut_year_set) {
+      data.table::set(dt, j = "fut_to_obs_y", value = obs_y - dt[["entry_year"]])
+      exp_prev_dt[
+        i = exp_obs_y == obs_y & exp_max_fut_year == max_fut_year,
+        j = "N" := dt[entry_year <= obs_y & obs_y < exit_year & fut_to_obs_y <= (max_fut_year - 1L), .N]
+      ]
+      data.table::set(dt, j = "fut_to_obs_y", value = NULL)
+    }
+  }
+
+  testthat::expect_equal(
+    prev_dt[["N"]],
+    exp_prev_dt[["N"]]
+  )
+
+})
+
