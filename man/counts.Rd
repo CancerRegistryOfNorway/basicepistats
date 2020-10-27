@@ -82,7 +82,7 @@ intended to be used directly by the end-user
 
 \itemize{
 \item \code{stat_count_} produces the number of records by strata; this function is
-intended to be used inside other functions.
+intended to be used within other functions
 }
 
 \itemize{

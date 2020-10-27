@@ -68,17 +68,24 @@ stat_count <- function(
   )
 }
 
+
 #' @rdname counts
 #' @details
 #' - `stat_count_` produces the number of records by strata; this function is
-#'   intended to be used inside other functions.
+#'   intended to be used within other functions
 #' @export
+#' @importFrom data.table .N
 stat_count_ <- function(
   x,
   by = NULL,
   subset = NULL,
   subset_style = c("zeros", "drop")[1]
 ) {
+  dbc::assert_prod_input_is_data_table(x)
+  assert_prod_input_by(by)
+  assert_prod_input_subset(subset, nrow(x))
+  assert_prod_input_subset_style(subset_style)
+
   stat_expr_(
     x = x,
     expr = quote(list(N = .N)),
@@ -87,6 +94,8 @@ stat_count_ <- function(
     subset_style = subset_style
   )
 }
+
+
 
 #' @rdname counts
 #' @param unique_by `[character]` (mandatory, no default)

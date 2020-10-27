@@ -202,7 +202,7 @@ stat_prevalence_count <- function(
       } else {
         stop("internal error: subset not logical, integer, nor NULL")
       }
-      count_dt <- stat_count(
+      count_dt <- stat_count_(
         x = dt, by = by, subset = subset, subset_style = subset_style
       )
       data.table::set(count_dt, j = entry_time_col_nm,
@@ -416,7 +416,7 @@ stat_year_based_prevalence_count <- function(
       } else {
         stop("internal error: subset not logical, integer, nor NULL")
       }
-      count_dt <- stat_count(
+      count_dt <- stat_count_(
         x = dt, by = by, subset = subset, subset_style = subset_style
       )
       data.table::set(count_dt, j = "observation_year",
