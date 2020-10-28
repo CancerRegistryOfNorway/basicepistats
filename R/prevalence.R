@@ -589,18 +589,30 @@ stat_year_based_prevalent_subject_count_ <- function(
   dbc::assert_prod_input_is_character_nonNA_atom(subject_id_col_nm)
   dbc::assert_prod_input_is_data_table_with_required_names(
     x,
-    required_names = subject_id_col_nm
+    required_names = c(entry_year_col_nm, exit_year_col_nm, subject_id_col_nm)
   )
-  select <- !duplicated(x, by = subject_id_col_nm)
+  assert_prod_input_by(by)
+  assert_prod_input_subset(subset, nrow(x))
+  assert_prod_input_subset_style(subset_style)
+
+  subset <- handle_subset_arg(dataset = x)
+  .__rn <- 1:nrow(x)
+  wh_earliest_record_by_subject <- x[
+    i = subset,
+    j = list(wh = .__rn[which.min(.SD[[1L]])]),
+    .SDcols = entry_year_col_nm,
+    keyby = eval(subject_id_col_nm)
+  ][["wh"]]
   if (is.logical(subset)) {
-    subset <- subset & select
+    subset <- intersect(which(subset), wh_earliest_record_by_subject)
   } else if (is.integer(subset)) {
-    subset <- intersect(subset, which(select))
+    subset <- intersect(subset, wh_earliest_record_by_subject)
   } else if (is.null(subset)) {
-    subset <- select
+    subset <- wh_earliest_record_by_subject
   } else {
     stop("internal error: subset not logical, integer, nor NULL")
   }
+
   fun_nm <- "stat_year_based_prevalence_count"
   do.call(fun_nm, mget(names(formals(fun_nm))))
 }
