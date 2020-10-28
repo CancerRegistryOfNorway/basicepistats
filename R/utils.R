@@ -173,7 +173,7 @@ handle_subset_arg <- function(
              "length ", length(subset_value))
       }
     }
-    if (is.integer(subset_value) && max(subset_value) > nrow(dataset)) {
+    if (is.integer(subset_value) && length(subset_value) > 0L && max(subset_value) > nrow(dataset)) {
       stop("max(", subset_expr_text, ") > number of rows in dataset")
     }
   }
@@ -267,6 +267,13 @@ report_user_input_subset <- function(x, n_dataset_rows) {
         x_nm = "subset",
         lo = -n_dataset_rows,
         hi = n_dataset_rows
+      ),
+      dbc::tests_to_report(
+        tests = "length(x) > 0L",
+        fail_messages = paste0(
+          "integer subset is of length zero; if you use integers to subset, ",
+          "please make sure the vector is of length larger than zero"
+        )
       )
     )
   }
@@ -300,4 +307,71 @@ assert_user_input_by <- function(x) {
              "report_is_list", "report_is_NULL")
   )
 }
+
+
+
+
+
+
+call_with_arg_list <- function(
+  fun_nm,
+  arg_list = NULL,
+  envir = parent.frame(1L)
+) {
+  dbc::assert_prod_input_is_character_nonNA_atom(fun_nm)
+  fun <- tryCatch(
+    eval(substitute(get(fun_nm, mode = "function")),
+         envir = envir),
+    error = function(e) e
+  )
+  if (!is.function(fun)) {
+    fun <- tryCatch(
+      eval(substitute(get(fun_nm, mode = "function")),
+           envir = parent.frame(1L)),
+      error = function(e) e
+    )
+  }
+  if (!is.function(fun)) {
+    fun <- tryCatch(
+      eval(substitute(get(fun_nm, mode = "function")),
+           envir = environment(call_with_arg_list)),
+      error = function(e) e
+    )
+  }
+  if (!is.function(fun)) {
+    stop("internal error: could not retrieve fun named ", deparse(fun_nm))
+  }
+
+  if (is.null(arg_list)) {
+    arg_list <- mget(names(formals(fun)), envir = envir)
+  }
+  dbc::assert_prod_input_is_list(arg_list)
+
+  is_unnamed_arg <- names(arg_list) == ""
+  n_unnamed_args <- sum(is_unnamed_arg)
+  if (n_unnamed_args > 0L) {
+    names(arg_list)[is_unnamed_arg] <- paste0(
+      "unnamed_argument_", 1:n_unnamed_args
+    )
+  }
+
+  fun_env <- new.env(parent = envir)
+  fun_env[[fun_nm]] <- fun
+  arg_env <- new.env(parent = fun_env)
+  lapply(seq_along(arg_list), function(i) {
+    arg_env[[names(arg_list)[i]]] <- arg_list[[i]]
+  })
+
+  call_string <- paste0(
+    fun_nm, "(\n",
+    paste0("  ", names(arg_list), " = ", names(arg_list), collapse = ",\n"),
+    "\n)"
+  )
+  call_string <- gsub("unnamed_argument_[0-9]+ = ", "", call_string)
+
+  call <- parse(text = call_string)[[1L]]
+  eval_env <- new.env(parent = arg_env)
+  eval(call, envir = eval_env)
+}
+
 

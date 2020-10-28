@@ -85,6 +85,7 @@ testthat::test_that("year-based prevalence works as intended", {
     maximum_follow_up_years = max_fut_year_set
   )
 
+
   exp_prev_dt <- data.table::CJ(
     exp_obs_y = obs_y_set, exp_max_fut_year = max_fut_year_set
   )

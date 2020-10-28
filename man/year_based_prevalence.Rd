@@ -150,7 +150,7 @@ my_dataset <- data.table::data.table(
 
 # NOTE: person that entered in 2003 _is_ counted, person that left in 2003
 # is _not_ counted
-stat_year_based_prevalent_record_count(
+basicepistats::stat_year_based_prevalent_record_count(
   x = my_dataset,
   entry_year_col_nm = "entry_year",
   exit_year_col_nm = "exit_year",

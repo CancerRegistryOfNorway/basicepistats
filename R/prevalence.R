@@ -316,8 +316,7 @@ stat_prevalent_subject_count <- function(
   assert_user_input_subset(subset, nrow(x))
   assert_user_input_subset_style(subset_style)
 
-  do.call(stat_prevalent_subject_count_,
-          mget(names(formals(stat_prevalent_subject_count_))))
+  call_with_arg_list("stat_prevalent_subject_count_")
 }
 
 
@@ -509,7 +508,7 @@ stat_year_based_prevalence_count <- function(
 #'
 #' # NOTE: person that entered in 2003 _is_ counted, person that left in 2003
 #' # is _not_ counted
-#' stat_year_based_prevalent_record_count(
+#' basicepistats::stat_year_based_prevalent_record_count(
 #'   x = my_dataset,
 #'   entry_year_col_nm = "entry_year",
 #'   exit_year_col_nm = "exit_year",
@@ -529,8 +528,7 @@ stat_year_based_prevalent_record_count <- function(
   subset = NULL,
   subset_style = "zeros"
 ) {
-  fun_nm <- "stat_year_based_prevalence_count"
-  do.call(fun_nm, mget(names(formals(fun_nm))))
+  call_with_arg_list("stat_year_based_prevalence_count")
 }
 
 
@@ -562,8 +560,7 @@ stat_year_based_prevalent_subject_count <- function(
   assert_user_input_subset(subset, nrow(x))
   assert_user_input_subset_style(subset_style)
 
-  do.call(stat_year_based_prevalent_subject_count_,
-          mget(names(formals(stat_year_based_prevalent_subject_count_))))
+  call_with_arg_list("stat_year_based_prevalent_subject_count_")
 }
 
 #' @param subject_id_col_nm `[character]` (mandatory, no default)
@@ -575,6 +572,7 @@ stat_year_based_prevalent_subject_count <- function(
 #' - `stat_year_based_prevalent_subject_count_`: intended for use inside other
 #'   functions
 #' @export
+#' @importFrom data.table .SD
 stat_year_based_prevalent_subject_count_ <- function(
   x,
   entry_year_col_nm,
@@ -596,13 +594,20 @@ stat_year_based_prevalent_subject_count_ <- function(
   assert_prod_input_subset_style(subset_style)
 
   subset <- handle_subset_arg(dataset = x)
-  .__rn <- 1:nrow(x)
-  wh_earliest_record_by_subject <- x[
-    i = subset,
-    j = list(wh = .__rn[which.min(.SD[[1L]])]),
-    .SDcols = entry_year_col_nm,
-    keyby = eval(subject_id_col_nm)
-  ][["wh"]]
+  if (is.null(subset)) {
+    subset <- rep(TRUE, nrow(x))
+  }
+
+  wh_earliest_record_by_subject <- local({
+    tmp_dt <- x[
+      i = subset,
+      j = .SD,
+      .SDcols = c(subject_id_col_nm, entry_year_col_nm)
+    ]
+    tmp_dt[, "row_number" := 1:nrow(tmp_dt)]
+    data.table::setkeyv(tmp_dt, c(subject_id_col_nm, entry_year_col_nm))
+    tmp_dt[["row_number"]][!duplicated(tmp_dt, by = subject_id_col_nm)]
+  })
   if (is.logical(subset)) {
     subset <- intersect(which(subset), wh_earliest_record_by_subject)
   } else if (is.integer(subset)) {
@@ -613,11 +618,8 @@ stat_year_based_prevalent_subject_count_ <- function(
     stop("internal error: subset not logical, integer, nor NULL")
   }
 
-  fun_nm <- "stat_year_based_prevalence_count"
-  do.call(fun_nm, mget(names(formals(fun_nm))))
+  call_with_arg_list("stat_year_based_prevalence_count")
 }
-
-
 
 
 

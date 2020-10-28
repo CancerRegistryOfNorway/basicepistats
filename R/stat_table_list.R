@@ -66,7 +66,7 @@ stat_table_list <- function(
       arg_set[[table_no]]
     })
     arg_list[names(varying_arg_list)] <- varied
-    do.call(stat_fun_nm, arg_list)
+    call_with_arg_list(stat_fun_nm, arg_list = arg_list)
   })
   data.table::setattr(
     stat_table_list, "class", union("stat_table_list", class(stat_table_list))
