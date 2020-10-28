@@ -598,25 +598,27 @@ stat_year_based_prevalent_subject_count_ <- function(
     subset <- rep(TRUE, nrow(x))
   }
 
-  wh_earliest_record_by_subject <- local({
-    tmp_dt <- x[
-      i = subset,
-      j = .SD,
-      .SDcols = c(subject_id_col_nm, entry_year_col_nm)
-    ]
-    tmp_dt[, "row_number" := 1:nrow(tmp_dt)]
+  subset <- local({
+    tmp_dt <- x[, .SD, .SDcols = c(subject_id_col_nm, entry_year_col_nm)]
+    tmp_dt[, ".__row_number" := 1:nrow(tmp_dt)]
+    tmp_dt <- tmp_dt[subset, ]
     data.table::setkeyv(tmp_dt, c(subject_id_col_nm, entry_year_col_nm))
-    tmp_dt[["row_number"]][!duplicated(tmp_dt, by = subject_id_col_nm)]
+    wh_earliest_record_by_subject <- tmp_dt[[".__row_number"]][
+      !duplicated(tmp_dt, by = subject_id_col_nm)
+      ]
+
+    if (is.logical(subset)) {
+      subset <- intersect(which(subset), wh_earliest_record_by_subject)
+    } else if (is.integer(subset)) {
+      subset <- intersect(subset, wh_earliest_record_by_subject)
+    } else if (is.null(subset)) {
+      subset <- wh_earliest_record_by_subject
+    } else {
+      stop("internal error: subset not logical, integer, nor NULL")
+    }
+
+    subset
   })
-  if (is.logical(subset)) {
-    subset <- intersect(which(subset), wh_earliest_record_by_subject)
-  } else if (is.integer(subset)) {
-    subset <- intersect(subset, wh_earliest_record_by_subject)
-  } else if (is.null(subset)) {
-    subset <- wh_earliest_record_by_subject
-  } else {
-    stop("internal error: subset not logical, integer, nor NULL")
-  }
 
   call_with_arg_list("stat_year_based_prevalence_count")
 }
