@@ -267,13 +267,6 @@ report_user_input_subset <- function(x, n_dataset_rows) {
         x_nm = "subset",
         lo = -n_dataset_rows,
         hi = n_dataset_rows
-      ),
-      dbc::tests_to_report(
-        tests = "length(x) > 0L",
-        fail_messages = paste0(
-          "integer subset is of length zero; if you use integers to subset, ",
-          "please make sure the vector is of length larger than zero"
-        )
       )
     )
   }
