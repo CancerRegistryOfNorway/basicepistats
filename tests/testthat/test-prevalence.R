@@ -76,7 +76,6 @@ testthat::test_that("year-based prevalence works as intended", {
   obs_y_set <- sort(union(dt[["entry_year"]], dt[["exit_year"]]))
   obs_y_set <- c(obs_y_set[1L] - 1L, obs_y_set, obs_y_set[length(obs_y_set)] + 1L)
   max_fut_year_set <- c(1L, 2L, 3L, 4L, 5L)
-  # max_fut_year_set <- 1L
   prev_dt <- basicepistats::stat_year_based_prevalent_record_count(
     x = dt,
     entry_year_col_nm = "entry_year",

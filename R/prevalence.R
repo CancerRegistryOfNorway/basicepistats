@@ -320,7 +320,7 @@ stat_prevalent_subject_count <- function(
 }
 
 
-#' @importFrom data.table :=
+#' @importFrom data.table := .EACHI
 stat_year_based_prevalence_count <- function(
   x,
   entry_year_col_nm,
@@ -350,9 +350,18 @@ stat_year_based_prevalence_count <- function(
 
   window_labels <- paste0("0 - ", maximum_follow_up_years - 1L)
   window_labels[window_labels == "0 - 0"] <- "0"
+  by_year <- data.table::data.table(
+    entry_year = unique(x[[entry_year_col_nm]])
+  )
+  max_exit_year <- max(x[[exit_year_col_nm]])
+  entry_year <- NULL # to appease R CMD CHECK
+  by_year <- by_year[
+    j = list(exit_year = min(entry_year + 1L, max_exit_year):max_exit_year),
+    keyby = "entry_year"
+  ]
   by <- list(
     by = by,
-    year_difference_group = factor(window_labels, levels = window_labels)
+    by_year
   )
   if (is.null(by[["by"]])) {
     by["by"] <- NULL
@@ -361,19 +370,10 @@ stat_year_based_prevalence_count <- function(
 
   # working dataset ---------------------------------------------------------
   dt <- data.table::setDT(list(
-    first_year = x[[entry_year_col_nm]],
-    last_year = x[[exit_year_col_nm]]
+    entry_year = x[[entry_year_col_nm]],
+    exit_year = x[[exit_year_col_nm]]
   ))
-  data.table::set(
-    x = dt,
-    j = "year_difference",
-    value = x[[exit_year_col_nm]] - x[[entry_year_col_nm]]
-  )
-  data.table::set(
-    x = dt, j = "year_difference_group",
-    value = by[["year_difference_group"]][1L]
-  )
-  stratum_col_nms <- setdiff(names(by), "year_difference_group")
+  stratum_col_nms <- setdiff(names(by), names(dt))
   if (length(stratum_col_nms) > 0L) {
     data.table::set(
       dt,
@@ -382,52 +382,69 @@ stat_year_based_prevalence_count <- function(
     )
   }
 
+  # overall counts -------------------------------------------------------------
+  overall_count_dt <- stat_count_(
+    x = dt,
+    by = by,
+    subset = subset,
+    subset_style = subset_style
+  )
+  rm(list = "dt")
+
   # counts ---------------------------------------------------------------------
   fut_breaks <- c(0, maximum_follow_up_years)
+  data.table::set(by, j = "in_follow_up_at_obs_y", value = TRUE)
+  join_dt_col_nms <- setdiff(names(by), c("entry_year", "exit_year"))
+  join_dt <- by[
+    !duplicated(by, by = join_dt_col_nms),
+    .SD,
+    .SDcols = join_dt_col_nms
+  ]
+  join_dt <- level_space_list_to_level_space_data_table(
+    list(by = join_dt, full_years_since_entry = window_labels)
+  )
+  join_dt_col_nms <- names(join_dt)
   count_dt <- data.table::rbindlist(
     lapply(seq_along(observation_years), function(i) {
       obs_y <- observation_years[i]
       data.table::set(
-        x = dt,
+        x = overall_count_dt,
         j = "in_follow_up_at_obs_y",
         value = data.table::between( # [a, b[ bounds
-          obs_y, dt[["first_year"]], dt[["last_year"]] - 1L, incbounds = TRUE
+          obs_y,
+          overall_count_dt[["entry_year"]],
+          overall_count_dt[["exit_year"]] - 1L,
+          incbounds = TRUE
         )
       )
       data.table::set(
-        x = dt,
-        j = "year_difference_group",
+        x = overall_count_dt,
+        j = "full_years_since_entry",
         value = cut(
-          obs_y - dt[["first_year"]],
+          obs_y - overall_count_dt[["entry_year"]],
           breaks = fut_breaks,
           right = FALSE,
           labels = window_labels
         )
       )
-      select <- dt[["in_follow_up_at_obs_y"]]
 
-      if (is.logical(subset)) {
-        subset <- subset & select
-      } else if (is.integer(subset)) {
-        subset <- intersect(subset, which(select))
-      } else if (is.null(subset)) {
-        subset <- select
-      } else {
-        stop("internal error: subset not logical, integer, nor NULL")
-      }
-      count_dt <- stat_count_(
-        x = dt, by = by, subset = subset, subset_style = subset_style
-      )
-      data.table::set(count_dt, j = "observation_year",
-                      value = obs_y)
+      count_dt <- overall_count_dt[
+        i = join_dt,
+        on = join_dt_col_nms,
+        j = lapply(.SD, sum),
+        .SDcols = "N",
+        keyby = .EACHI
+      ]
+      count_dt[is.na(count_dt[["N"]]), "N" := 0L]
+      data.table::set(count_dt, j = "observation_year", value = obs_y)
+      data.table::set(count_dt, j = "in_follow_up_at_obs_y", value = NULL)
       count_dt[]
-
     })
   )
 
   # final touches --------------------------------------------------------------
-  nonvalue_col_nms <- c(
-    stratum_col_nms, "observation_year", "year_difference_group"
+  nonvalue_col_nms <- union(
+    stratum_col_nms, c("observation_year", "full_years_since_entry")
   )
   all_col_nms <- c(nonvalue_col_nms, "N")
   data.table::setcolorder(count_dt, all_col_nms)
@@ -435,10 +452,8 @@ stat_year_based_prevalence_count <- function(
   N <- NULL # to appease R CMD CHECK
   count_dt[
     j = "N" := cumsum(N),
-    by = eval(setdiff(nonvalue_col_nms, "year_difference_group"))
+    by = eval(setdiff(nonvalue_col_nms, "full_years_since_entry"))
   ]
-  data.table::setnames(count_dt, "year_difference_group",
-                       "full_years_since_entry")
   return(count_dt[])
 }
 
