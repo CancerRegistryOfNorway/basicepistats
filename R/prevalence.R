@@ -331,6 +331,12 @@ stat_year_based_prevalence_count <- function(
   subset = NULL,
   subset_style = "zeros"
 ) {
+
+  # @codedoc_comment_block stat_year_based_prevalence_count
+  # Year-based prevalence counts are computed in the (internal, not intended
+  # for users) function stat_year_based_prevalence_count.
+  # @codedoc_comment_block stat_year_based_prevalence_count
+
   # assertions -----------------------------------------------------------------
   dbc::assert_prod_input_is_character_nonNA_atom(entry_year_col_nm)
   dbc::assert_prod_input_is_character_nonNA_atom(exit_year_col_nm)
@@ -383,6 +389,18 @@ stat_year_based_prevalence_count <- function(
   }
 
   # overall counts -------------------------------------------------------------
+  # @codedoc_comment_block stat_year_based_prevalence_count
+  # Year-based prevalence is based on the year of entry and exit.
+  # stat_year_based_prevalence_count first computes counts by the year of entry,
+  # year of exit, and any additional stratifying columns the user requests.
+  # E.g.
+  #
+  # | entry_year| exit_year|  N|
+  # |----------:|---------:|--:|
+  # |       2000|      2001|  5|
+  # |       2000|      2002| 55|
+  # |       2001|      2002| 60|
+  # @codedoc_comment_block stat_year_based_prevalence_count
   overall_count_dt <- stat_count_(
     x = dt,
     by = by,
@@ -406,6 +424,21 @@ stat_year_based_prevalence_count <- function(
   join_dt_col_nms <- names(join_dt)
   count_dt <- data.table::rbindlist(
     lapply(seq_along(observation_years), function(i) {
+
+      # @codedoc_comment_block stat_year_based_prevalence_count
+      # Next the table of counts will be further aggregated suitably for each
+      # observation_year value (year of observation). E.g. for year of
+      # observation 2001, those who left follow-up in 2001 or in earlier years
+      # will not be prevalent for that year of observation. Also the number of
+      # full years since entry is identified at this point. E.g. for year of
+      # observation 2001, rows of the count table with entry_year 2000 have
+      # one full year. The appropriate categories of full_years_since_entry
+      # are identified and those rows in the count table still "in follow-up"
+      # are retained for further aggregating the counts (summing over
+      # entry_year and exit_year, but by full_years_since_entry,
+      # observation_year and any
+      # stratifying columns requested by the user).
+      # @codedoc_comment_block stat_year_based_prevalence_count
       obs_y <- observation_years[i]
       data.table::set(
         x = overall_count_dt,
@@ -442,6 +475,11 @@ stat_year_based_prevalence_count <- function(
     })
   )
 
+  # @codedoc_comment_block stat_year_based_prevalence_count
+  # The result is a table of counts by observation_year and
+  # full_years_since_entry (+ user-requested strata).
+  # @codedoc_comment_block stat_year_based_prevalence_count
+
   # final touches --------------------------------------------------------------
   nonvalue_col_nms <- union(
     stratum_col_nms, c("observation_year", "full_years_since_entry")
@@ -456,6 +494,24 @@ stat_year_based_prevalence_count <- function(
   ]
   return(count_dt[])
 }
+
+
+
+
+codedoc_stat_year_based_prevalence_count <- function() {
+  requireNamespace("codedoc")
+
+  df <- codedoc::extract_keyed_comment_blocks(
+    text_file_paths = "R/prevalence.R"
+  )
+  df <- df[grepl("year_based_prevalence", df$key), ]
+
+  lines <- unlist(lapply(df[["comment_block"]], function(obj) {
+    c("", obj, "")
+  }))
+  return(c("@section Under the hood:", lines))
+}
+
 
 
 #' @title Year-Based Prevalence
@@ -512,6 +568,10 @@ stat_year_based_prevalence_count <- function(
 #'
 #' Therefore, e.g. an observation is in the one-year prevalence group if
 #' `observation_year - entry_year  < 1`, e.g. `2020 - 2020 = 0 < 1`.
+#'
+#'
+#' @eval codedoc_stat_year_based_prevalence_count()
+#'
 #' @examples
 #' library("data.table")
 #' my_dataset <- data.table::data.table(
@@ -545,6 +605,9 @@ stat_year_based_prevalent_record_count <- function(
 ) {
   call_with_arg_list("stat_year_based_prevalence_count")
 }
+
+
+
 
 
 #' @rdname year_based_prevalence
@@ -637,6 +700,9 @@ stat_year_based_prevalent_subject_count_ <- function(
 
   call_with_arg_list("stat_year_based_prevalence_count")
 }
+
+
+
 
 
 

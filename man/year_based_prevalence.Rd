@@ -139,6 +139,40 @@ the end-user
 functions
 }
 }
+\section{Under the hood}{
+
+
+Year-based prevalence counts are computed in the (internal, not intended
+for users) function stat_year_based_prevalence_count.
+
+Year-based prevalence is based on the year of entry and exit.
+stat_year_based_prevalence_count first computes counts by the year of entry,
+year of exit, and any additional stratifying columns the user requests.
+E.g.\tabular{rrr}{
+   entry_year \tab exit_year \tab N \cr
+   2000 \tab 2001 \tab 5 \cr
+   2000 \tab 2002 \tab 55 \cr
+   2001 \tab 2002 \tab 60 \cr
+}
+
+
+Next the table of counts will be further aggregated suitably for each
+observation_year value (year of observation). E.g. for year of
+observation 2001, those who left follow-up in 2001 or in earlier years
+will not be prevalent for that year of observation. Also the number of
+full years since entry is identified at this point. E.g. for year of
+observation 2001, rows of the count table with entry_year 2000 have
+one full year. The appropriate categories of full_years_since_entry
+are identified and those rows in the count table still "in follow-up"
+are retained for further aggregating the counts (summing over
+entry_year and exit_year, but by full_years_since_entry,
+observation_year and any
+stratifying columns requested by the user).
+
+The result is a table of counts by observation_year and
+full_years_since_entry (+ user-requested strata).
+}
+
 \examples{
 library("data.table")
 my_dataset <- data.table::data.table(
