@@ -106,3 +106,58 @@ testthat::test_that("year-based prevalence works as intended", {
 
 })
 
+
+testthat::test_that("year-based prevalence works as intended, vol II", {
+
+  RNGversion("4.0.0")
+  set.seed(1337)
+  dt <- data.table::data.table(
+    entry_year = sample(2001:2010, size = 1000L, replace = TRUE),
+    full_year_fut = sample(0:10, size = 1000L, replace = TRUE)
+  )
+  dt[, "id" := sort(sample(1:900, .N, replace = TRUE))]
+  dt[, "exit_year" := entry_year + full_year_fut]
+  dt[, "exit_year" := max(exit_year), by = "id"]
+  dt[, "full_year_fut" := exit_year - entry_year]
+  dt[, "stratum" := rep(1:2, length.out = .N)]
+  data.table::setkeyv(dt, c("id", "entry_year"))
+
+  # record-level ---------------------------------------------------------------
+  prev_dt <- basicepistats::stat_year_based_prevalent_record_count(
+    x = dt,
+    entry_year_col_nm = "entry_year",
+    exit_year_col_nm = "exit_year",
+    observation_years = 2010L,
+    maximum_follow_up_years = c(1L, 999L)
+  )
+
+  exp_oneyear_prev <- dt[entry_year == 2010 & exit_year > 2010, .N]
+  exp_total_prev <- dt[entry_year <= 2010 & exit_year > 2010, .N]
+
+  testthat::expect_equal(
+    prev_dt[["N"]],
+    c(exp_oneyear_prev, exp_total_prev)
+  )
+
+  # subject-level --------------------------------------------------------------
+  prev_dt <- basicepistats::stat_year_based_prevalent_subject_count(
+    x = dt,
+    entry_year_col_nm = "entry_year",
+    exit_year_col_nm = "exit_year",
+    subject_id_col_nm = "id",
+    observation_years = 2010L,
+    maximum_follow_up_years = c(1L, 999L)
+  )
+
+  exp_oneyear_prev <- dt[!duplicated(id), ][entry_year == 2010 & exit_year > 2010, .N]
+  exp_total_prev <- dt[!duplicated(id), ][entry_year <= 2010 & exit_year > 2010, .N]
+
+  testthat::expect_equal(
+    prev_dt[["N"]],
+    c(exp_oneyear_prev, exp_total_prev)
+  )
+
+
+})
+
+
