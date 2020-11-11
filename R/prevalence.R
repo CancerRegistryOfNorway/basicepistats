@@ -419,7 +419,8 @@ stat_year_based_prevalence_count <- function(
     .SDcols = join_dt_col_nms
   ]
   join_dt <- level_space_list_to_level_space_data_table(
-    list(by = join_dt, full_years_since_entry = window_labels)
+    list(by = join_dt,
+         full_years_since_entry = factor(window_labels, labels = window_labels))
   )
   join_dt_col_nms <- names(join_dt)
   count_dt <- data.table::rbindlist(
@@ -474,7 +475,6 @@ stat_year_based_prevalence_count <- function(
       count_dt[]
     })
   )
-
   # @codedoc_comment_block stat_year_based_prevalence_count
   # The result is a table of counts by observation_year and
   # full_years_since_entry (+ user-requested strata).
