@@ -229,35 +229,50 @@ handle_by_arg <- function(by, dataset, subset, subset_style) {
 subset_style_options <- function() {
   c("zeros", "drop")
 }
-report_user_input_subset_style <- function(x) {
+report_user_input_subset_style <- function(x, x_nm = NULL, call = NULL) {
+  x_nm <- dbc::handle_arg_x_nm(x_nm)
+  call <- dbc::handle_arg_call(call)
   rbind(
-    dbc::report_is_character_nonNA_atom(x, x_nm = "subset_style"),
+    dbc::report_is_character_nonNA_atom(x, x_nm = "subset_style", call = call),
     dbc::report_atom_is_in_set(
-      x, x_nm = "subset_style", set = subset_style_options()
+      x, x_nm = "subset_style", set = subset_style_options(),
+      call = call
     )
   )
 }
 
-assert_user_input_subset_style <- function(x) {
-  dbc::report_to_assertion(report_user_input_subset_style(x),
-                           assertion_type = "user_input")
+assert_user_input_subset_style <- function(x, x_nm = NULL, call = NULL) {
+  x_nm <- dbc::handle_arg_x_nm(x_nm)
+  call <- dbc::handle_arg_call(call)
+  dbc::report_to_assertion(
+    report_user_input_subset_style(x, x_nm = x_nm, call = call),
+    assertion_type = "user_input"
+  )
 }
 
-assert_prod_input_subset_style <- function(x) {
-  dbc::report_to_assertion(report_user_input_subset_style(x),
-                           assertion_type = "prod_input")
+assert_prod_input_subset_style <- function(x, x_nm = NULL, call = NULL) {
+  x_nm <- dbc::handle_arg_x_nm(x_nm)
+  call <- dbc::handle_arg_call(call)
+  dbc::report_to_assertion(
+    report_user_input_subset_style(x, x_nm = x_nm, call = call),
+    assertion_type = "prod_input"
+  )
 }
 
-report_user_input_subset <- function(x, n_dataset_rows) {
+report_user_input_subset <- function(
+  x, n_dataset_rows, x_nm = NULL, call = NULL
+) {
+  x_nm <- dbc::handle_arg_x_nm(x_nm)
+  call <- dbc::handle_arg_call(call)
   report_df <- dbc::report_has_one_of_classes(
-    x = x, x_nm = "subset",
+    x = x, x_nm = "subset", call = call,
     classes = c("NULL", "integer", "logical")
   )
   if (inherits(x, "logical")) {
     report_df <- rbind(
       report_df,
       dbc::report_is_of_length(
-        x = x, x_nm = "subset",
+        x = x, x_nm = "subset", call = call,
         expected_length = n_dataset_rows
       )
     )
@@ -267,6 +282,7 @@ report_user_input_subset <- function(x, n_dataset_rows) {
       dbc::report_is_between_inclusive(
         x = x,
         x_nm = "subset",
+        call = call,
         lo = -n_dataset_rows,
         hi = n_dataset_rows
       )
@@ -275,20 +291,34 @@ report_user_input_subset <- function(x, n_dataset_rows) {
   return(report_df)
 }
 
-assert_user_input_subset <- function(x, n_dataset_rows) {
-  dbc::report_to_assertion(report_user_input_subset(x, n_dataset_rows),
-                           assertion_type = "user_input")
+assert_user_input_subset <- function(
+  x, n_dataset_rows, x_nm = NULL, call = NULL
+) {
+  x_nm <- dbc::handle_arg_x_nm(x_nm)
+  call <- dbc::handle_arg_call(call)
+  dbc::report_to_assertion(
+    report_user_input_subset(x, n_dataset_rows, x_nm = x_nm, call = call),
+    assertion_type = "user_input"
+  )
 }
 
-assert_prod_input_subset <- function(x, n_dataset_rows) {
-  dbc::report_to_assertion(report_user_input_subset(x, n_dataset_rows),
-                           assertion_type = "prod_input")
+assert_prod_input_subset <- function(x, n_dataset_rows, x_nm = NULL, call = NULL
+) {
+  x_nm <- dbc::handle_arg_x_nm(x_nm)
+  call <- dbc::handle_arg_call(call)
+  dbc::report_to_assertion(
+    report_user_input_subset(x, n_dataset_rows, x_nm = x_nm, call = call),
+    assertion_type = "prod_input"
+  )
 }
 
-assert_prod_input_by <- function(x) {
+assert_prod_input_by <- function(x, x_nm = NULL, call = NULL) {
+  x_nm <- dbc::handle_arg_x_nm(x_nm)
+  call <- dbc::handle_arg_call(call)
   dbc::assert_prod_input_is_one_of(
     x,
-    x_nm = "by",
+    x_nm = x_nm,
+    call = call,
     funs = c(dbc::report_is_data_table,
              dbc::report_is_character_nonNA_vector,
              dbc::report_is_list,
@@ -296,10 +326,15 @@ assert_prod_input_by <- function(x) {
   )
 }
 
-assert_user_input_by <- function(x) {
+assert_user_input_by <- function(
+  x, x_nm = NULL, call = NULL
+) {
+  x_nm <- dbc::handle_arg_x_nm(x_nm)
+  call <- dbc::handle_arg_call(call)
   dbc::assert_user_input_is_one_of(
     x,
-    x_nm = "by",
+    x_nm = x_nm,
+    call = call,
     funs = c(dbc::report_is_data_table,
              dbc::report_is_character_nonNA_vector,
              dbc::report_is_list,
