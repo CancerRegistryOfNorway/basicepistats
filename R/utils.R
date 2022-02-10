@@ -143,8 +143,9 @@ handle_subset_arg <- function(
   dbc::assert_prod_interim_is_one_of(
     subset_value,
     x_nm = subset_expr_text,
-    funs = c("report_is_NULL", "report_is_logical_vector",
-             "report_is_number_vector")
+    funs = list(dbc::report_is_NULL,
+                dbc::report_is_logical_vector,
+                dbc::report_is_number_vector)
   )
 
   if (anyNA(subset_value)) {
@@ -225,11 +226,14 @@ handle_by_arg <- function(by, dataset, subset, subset_style) {
   return(by)
 }
 
+subset_style_options <- function() {
+  c("zeros", "drop")
+}
 report_user_input_subset_style <- function(x) {
   rbind(
     dbc::report_is_character_nonNA_atom(x, x_nm = "subset_style"),
     dbc::report_atom_is_in_set(
-      x, x_nm = "subset_style", set = c("zeros", "drop")
+      x, x_nm = "subset_style", set = subset_style_options()
     )
   )
 }
@@ -245,11 +249,9 @@ assert_prod_input_subset_style <- function(x) {
 }
 
 report_user_input_subset <- function(x, n_dataset_rows) {
-  report_df <- rbind(
-    dbc::report_has_one_of_classes(
-      x = x, x_nm = "subset",
-      classes = c("NULL", "integer", "logical")
-    )
+  report_df <- dbc::report_has_one_of_classes(
+    x = x, x_nm = "subset",
+    classes = c("NULL", "integer", "logical")
   )
   if (inherits(x, "logical")) {
     report_df <- rbind(
@@ -287,8 +289,10 @@ assert_prod_input_by <- function(x) {
   dbc::assert_prod_input_is_one_of(
     x,
     x_nm = "by",
-    funs = c("report_is_data_table", "report_is_character_nonNA_vector",
-             "report_is_list", "report_is_NULL")
+    funs = c(dbc::report_is_data_table,
+             dbc::report_is_character_nonNA_vector,
+             dbc::report_is_list,
+             dbc::report_is_NULL)
   )
 }
 
@@ -296,8 +300,10 @@ assert_user_input_by <- function(x) {
   dbc::assert_user_input_is_one_of(
     x,
     x_nm = "by",
-    funs = c("report_is_data_table", "report_is_character_nonNA_vector",
-             "report_is_list", "report_is_NULL")
+    funs = c(dbc::report_is_data_table,
+             dbc::report_is_character_nonNA_vector,
+             dbc::report_is_list,
+             dbc::report_is_NULL)
   )
 }
 
