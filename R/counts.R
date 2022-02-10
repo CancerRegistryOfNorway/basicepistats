@@ -175,7 +175,7 @@ stat_expr_ <- function(
 ) {
   dbc::assert_prod_input_is_data_table(x)
   dbc::assert_prod_input_has_one_of_classes(expr, classes = c("call", "name"))
-  assert_prod_input_by(x)
+  assert_prod_input_by(by)
   assert_prod_input_subset(subset, nrow(x))
   assert_prod_input_subset_style(subset_style)
   subset <- handle_subset_arg(dataset = x)
