@@ -320,8 +320,8 @@ stat_prevalent_subject_count <- function(
 }
 
 
-#' @importFrom data.table := .EACHI
-stat_year_based_prevalence_count <- function(
+#' @importFrom data.table := .EACHI .SD
+stat_year_based_prevalence_count__ <- function(
   x,
   entry_year_col_nm,
   exit_year_col_nm,
@@ -332,12 +332,14 @@ stat_year_based_prevalence_count <- function(
   subset_style = "zeros"
 ) {
 
-  # @codedoc_comment_block stat_year_based_prevalence_count
+  # @codedoc_comment_block stat_year_based_prevalence_count__
   # Year-based prevalence counts are computed in the (internal, not intended
-  # for users) function stat_year_based_prevalence_count.
-  # @codedoc_comment_block stat_year_based_prevalence_count
+  # for users) function `stat_year_based_prevalence_count__`
+  # @codedoc_comment_block stat_year_based_prevalence_count__
 
   # assertions -----------------------------------------------------------------
+  whole_run_start_time <- proc.time()
+  assertion_start_time <- proc.time()
   dbc::assert_prod_input_is_character_nonNA_atom(entry_year_col_nm)
   dbc::assert_prod_input_is_character_nonNA_atom(exit_year_col_nm)
   dbc::assert_prod_input_is_integer_nonNA_vector(maximum_follow_up_years)
@@ -347,34 +349,21 @@ stat_year_based_prevalence_count <- function(
     x,
     required_names = time_scale_names
   )
+  message("* assertions done; ", data.table::timetaken(assertion_start_time))
 
   # handle by & subset ---------------------------------------------------------
+  by_subset_start_time <- proc.time()
   subset <- handle_subset_arg(dataset = x)
+  if (is.null(subset)) {
+    subset <- rep(TRUE, nrow(x))
+  }
   by <- handle_by_arg(
     by = by, dataset = x, subset = subset, subset_style = subset_style
   )
+  message("* handle by & subset done; ", data.table::timetaken(by_subset_start_time))
 
-  window_labels <- paste0("0 - ", maximum_follow_up_years - 1L)
-  window_labels[window_labels == "0 - 0"] <- "0"
-  by_year <- data.table::data.table(
-    entry_year = unique(x[[entry_year_col_nm]])
-  )
-  max_exit_year <- max(x[[exit_year_col_nm]])
-  entry_year <- NULL # to appease R CMD CHECK
-  by_year <- by_year[
-    j = list(exit_year = min(entry_year + 1L, max_exit_year):max_exit_year),
-    keyby = "entry_year"
-  ]
-  by <- list(
-    by = by,
-    by_year
-  )
-  if (is.null(by[["by"]])) {
-    by["by"] <- NULL
-  }
-  by <- level_space_list_to_level_space_data_table(by)
-
-  # working dataset ---------------------------------------------------------
+  # working dataset ------------------------------------------------------------
+  working_dataset_start_time <- proc.time()
   dt <- data.table::setDT(list(
     entry_year = x[[entry_year_col_nm]],
     exit_year = x[[exit_year_col_nm]]
@@ -386,113 +375,100 @@ stat_year_based_prevalence_count <- function(
       j = stratum_col_nms,
       value = mget(stratum_col_nms, envir = as.environment(x))
     )
+    data.table::setcolorder(dt, c(stratum_col_nms, "entry_year", "exit_year"))
   }
-
-  # overall counts -------------------------------------------------------------
-  # @codedoc_comment_block stat_year_based_prevalence_count
-  # Year-based prevalence is based on the year of entry and exit.
-  # stat_year_based_prevalence_count first computes counts by the year of entry,
-  # year of exit, and any additional stratifying columns the user requests.
-  # E.g.
-  #
-  # | entry_year| exit_year|  N|
-  # |----------:|---------:|--:|
-  # |       2000|      2001|  5|
-  # |       2000|      2002| 55|
-  # |       2001|      2002| 60|
-  # @codedoc_comment_block stat_year_based_prevalence_count
-  overall_count_dt <- stat_count_(
-    x = dt,
-    by = by,
-    subset = subset,
-    subset_style = subset_style
-  )
-  rm(list = "dt")
+  dt <- dt[
+    i = subset,
+    j = .N,
+    keyby = names(dt)
+  ]
+  message("* working dataset done; ",
+          data.table::timetaken(working_dataset_start_time))
 
   # counts ---------------------------------------------------------------------
+  counts_start_time <- proc.time()
+  window_labels <- paste0("0 - ", maximum_follow_up_years - 1L)
+  window_labels[window_labels == "0 - 0"] <- "0"
   fut_breaks <- c(0, maximum_follow_up_years)
-  data.table::set(by, j = "in_follow_up_at_obs_y", value = TRUE)
-  join_dt_col_nms <- setdiff(names(by), c("entry_year", "exit_year"))
-  join_dt <- by[
-    !duplicated(by, by = join_dt_col_nms),
-    .SD,
-    .SDcols = join_dt_col_nms
-  ]
   join_dt <- level_space_list_to_level_space_data_table(
-    list(by = join_dt,
+    list(by = by,
+         in_follow_up_at_obs_y = TRUE,
          full_years_since_entry = factor(window_labels, labels = window_labels))
   )
-  join_dt_col_nms <- names(join_dt)
-  count_dt <- data.table::rbindlist(
-    lapply(seq_along(observation_years), function(i) {
-
-      # @codedoc_comment_block stat_year_based_prevalence_count
-      # Next the table of counts will be further aggregated suitably for each
-      # observation_year value (year of observation). E.g. for year of
-      # observation 2001, those who left follow-up in 2001 or in earlier years
-      # will not be prevalent for that year of observation. Also the number of
-      # full years since entry is identified at this point. E.g. for year of
-      # observation 2001, rows of the count table with entry_year 2000 have
-      # one full year. The appropriate categories of full_years_since_entry
-      # are identified and those rows in the count table still "in follow-up"
-      # are retained for further aggregating the counts (summing over
-      # entry_year and exit_year, but by full_years_since_entry,
-      # observation_year and any
-      # stratifying columns requested by the user).
-      # @codedoc_comment_block stat_year_based_prevalence_count
-      obs_y <- observation_years[i]
-      data.table::set(
-        x = overall_count_dt,
-        j = "in_follow_up_at_obs_y",
-        value = data.table::between( # [a, b[ bounds
-          obs_y,
-          overall_count_dt[["entry_year"]],
-          overall_count_dt[["exit_year"]] - 1L,
-          incbounds = TRUE
-        )
+  output <- lapply(seq_along(observation_years), function(i) {
+    # @codedoc_comment_block stat_year_based_prevalence_count__
+    # Prevalence counts are computed by looping over `observation_years`.
+    # For each observation year, we identify observations in `x` which are still
+    # in follow-up at the last microsecond of that year. This is done by testing
+    # whether `entry_year <= observation_year <= exit_year + 1L`.
+    # @codedoc_comment_block stat_year_based_prevalence_count__
+    observation_year <- observation_years[i]
+    data.table::set(
+      x = dt,
+      j = "in_follow_up_at_obs_y",
+      value = data.table::between( # [a, b[ bounds
+        observation_year,
+        dt[["entry_year"]],
+        dt[["exit_year"]] - 1L,
+        incbounds = TRUE
       )
-      data.table::set(
-        x = overall_count_dt,
-        j = "full_years_since_entry",
-        value = cut(
-          obs_y - overall_count_dt[["entry_year"]],
-          breaks = fut_breaks,
-          right = FALSE,
-          labels = window_labels
-        )
+    )
+    # @codedoc_comment_block stat_year_based_prevalence_count__
+    # The number of years survived before the observation year
+    # (`full_years_since_entry`) is identified for each case via a call to
+    # `[cut]`, which categorises the survival times based on what was supplied
+    # to arg `maximum_follow_up_years`.
+    # @codedoc_comment_block stat_year_based_prevalence_count__
+    data.table::set(
+      x = dt,
+      j = "full_years_since_entry",
+      value = cut(
+        observation_year - dt[["entry_year"]],
+        breaks = fut_breaks,
+        right = FALSE,
+        labels = window_labels
       )
-
-      count_dt <- overall_count_dt[
-        i = join_dt,
-        on = join_dt_col_nms,
-        j = lapply(.SD, sum),
-        .SDcols = "N",
-        keyby = .EACHI
-      ]
-      count_dt[is.na(count_dt[["N"]]), "N" := 0L]
-      data.table::set(count_dt, j = "observation_year", value = obs_y)
-      data.table::set(count_dt, j = "in_follow_up_at_obs_y", value = NULL)
-      count_dt[]
-    })
-  )
-  # @codedoc_comment_block stat_year_based_prevalence_count
-  # The result is a table of counts by observation_year and
-  # full_years_since_entry (+ user-requested strata).
-  # @codedoc_comment_block stat_year_based_prevalence_count
+    )
+    # @codedoc_comment_block stat_year_based_prevalence_count__
+    # Then we simply count the number of cases for each stratum
+    # (`stratum_col_nms`) and `full_years_since_entry` category for the current
+    # observation year.
+    # @codedoc_comment_block stat_year_based_prevalence_count__
+    count_dt <- dt[
+      i = join_dt,
+      on = names(join_dt),
+      j = list(N = sum(.SD[[1L]])), # note: NA in N means no such rows in dt.
+      .SDcols = "N",
+      keyby = .EACHI
+    ]
+    data.table::set(count_dt, j = "observation_year", value = observation_year)
+    data.table::set(count_dt, j = "in_follow_up_at_obs_y", value = NULL)
+    count_dt[]
+  })
+  output <- data.table::rbindlist(output)
+  output[is.na(output[["N"]]), "N" := 0L]
+  message("* counts done; ", data.table::timetaken(counts_start_time))
+  # @codedoc_comment_block stat_year_based_prevalence_count__
+  # The result is a table of counts by `observation_year`,
+  # `full_years_since_entry`, and any user-requested stratifying columns.
+  # @codedoc_comment_block stat_year_based_prevalence_count__
 
   # final touches --------------------------------------------------------------
+  final_touches_start_time <- proc.time()
   nonvalue_col_nms <- union(
     stratum_col_nms, c("observation_year", "full_years_since_entry")
   )
   all_col_nms <- c(nonvalue_col_nms, "N")
-  data.table::setcolorder(count_dt, all_col_nms)
-  data.table::setkeyv(count_dt, nonvalue_col_nms)
-  N <- NULL # to appease R CMD CHECK
-  count_dt[
-    j = "N" := cumsum(N),
+  data.table::setcolorder(output, all_col_nms)
+  data.table::setkeyv(output, nonvalue_col_nms)
+  output[
+    j = "N" := cumsum(.SD[[1L]]),
+    .SDcols = "N",
     by = eval(setdiff(nonvalue_col_nms, "full_years_since_entry"))
   ]
-  return(count_dt[])
+  message("* final touches done; ", data.table::timetaken(final_touches_start_time))
+  message("* whole run done; ", data.table::timetaken(whole_run_start_time))
+  return(output[])
 }
 
 
@@ -603,7 +579,7 @@ stat_year_based_prevalent_record_count <- function(
   subset = NULL,
   subset_style = "zeros"
 ) {
-  call_with_arg_list("stat_year_based_prevalence_count")
+  call_with_arg_list("stat_year_based_prevalence_count__")
 }
 
 
@@ -698,7 +674,7 @@ stat_year_based_prevalent_subject_count_ <- function(
     subset
   })
 
-  call_with_arg_list("stat_year_based_prevalence_count")
+  call_with_arg_list("stat_year_based_prevalence_count__")
 }
 
 

@@ -84,7 +84,6 @@ testthat::test_that("year-based prevalence works as intended", {
     maximum_follow_up_years = max_fut_year_set
   )
 
-
   exp_prev_dt <- data.table::CJ(
     exp_obs_y = obs_y_set, exp_max_fut_year = max_fut_year_set
   )
@@ -128,11 +127,11 @@ testthat::test_that("year-based prevalence works as intended, vol II", {
     entry_year_col_nm = "entry_year",
     exit_year_col_nm = "exit_year",
     observation_years = 2010L,
-    maximum_follow_up_years = c(1L, 999L)
+    maximum_follow_up_years = c(1L, 1e3L)
   )
 
   exp_oneyear_prev <- dt[entry_year == 2010 & exit_year > 2010, .N]
-  exp_total_prev <- dt[entry_year <= 2010 & exit_year > 2010, .N]
+  exp_total_prev   <- dt[entry_year <= 2010 & exit_year > 2010, .N]
 
   testthat::expect_equal(
     prev_dt[["N"]],
@@ -149,8 +148,12 @@ testthat::test_that("year-based prevalence works as intended, vol II", {
     maximum_follow_up_years = c(1L, 999L)
   )
 
-  exp_oneyear_prev <- dt[!duplicated(id), ][entry_year == 2010 & exit_year > 2010, .N]
-  exp_total_prev <- dt[!duplicated(id), ][entry_year <= 2010 & exit_year > 2010, .N]
+  exp_oneyear_prev <- dt[!duplicated(id), ][
+    entry_year == 2010 & exit_year > 2010, .N
+  ]
+  exp_total_prev   <- dt[!duplicated(id), ][
+    entry_year <= 2010 & exit_year > 2010, .N
+  ]
 
   testthat::expect_equal(
     prev_dt[["N"]],

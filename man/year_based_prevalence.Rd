@@ -143,34 +143,24 @@ functions
 
 
 Year-based prevalence counts are computed in the (internal, not intended
-for users) function stat_year_based_prevalence_count.
+for users) function \code{stat_year_based_prevalence_count__}
 
-Year-based prevalence is based on the year of entry and exit.
-stat_year_based_prevalence_count first computes counts by the year of entry,
-year of exit, and any additional stratifying columns the user requests.
-E.g.\tabular{rrr}{
-   entry_year \tab exit_year \tab N \cr
-   2000 \tab 2001 \tab 5 \cr
-   2000 \tab 2002 \tab 55 \cr
-   2001 \tab 2002 \tab 60 \cr
-}
+Prevalence counts are computed by looping over \code{observation_years}.
+For each observation year, we identify observations in \code{x} which are still
+in follow-up at the last microsecond of that year. This is done by testing
+whether \verb{entry_year <= observation_year <= exit_year + 1L}.
 
+The number of years survived before the observation year
+(\code{full_years_since_entry}) is identified for each case via a call to
+\verb{[cut]}, which categorises the survival times based on what was supplied
+to arg \code{maximum_follow_up_years}.
 
-Next the table of counts will be further aggregated suitably for each
-observation_year value (year of observation). E.g. for year of
-observation 2001, those who left follow-up in 2001 or in earlier years
-will not be prevalent for that year of observation. Also the number of
-full years since entry is identified at this point. E.g. for year of
-observation 2001, rows of the count table with entry_year 2000 have
-one full year. The appropriate categories of full_years_since_entry
-are identified and those rows in the count table still "in follow-up"
-are retained for further aggregating the counts (summing over
-entry_year and exit_year, but by full_years_since_entry,
-observation_year and any
-stratifying columns requested by the user).
+Then we simply count the number of cases for each stratum
+(\code{stratum_col_nms}) and \code{full_years_since_entry} category for the current
+observation year.
 
-The result is a table of counts by observation_year and
-full_years_since_entry (+ user-requested strata).
+The result is a table of counts by \code{observation_year},
+\code{full_years_since_entry}, and any user-requested stratifying columns.
 }
 
 \examples{
