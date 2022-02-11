@@ -329,7 +329,8 @@ stat_year_based_prevalence_count__ <- function(
   maximum_follow_up_years = c(1L, 3L, 5L, 1e3L),
   by = NULL,
   subset = NULL,
-  subset_style = "zeros"
+  subset_style = "zeros",
+  verbose = FALSE
 ) {
 
   # @codedoc_comment_block stat_year_based_prevalence_count__
@@ -349,7 +350,10 @@ stat_year_based_prevalence_count__ <- function(
     x,
     required_names = time_scale_names
   )
-  message("* assertions done; ", data.table::timetaken(assertion_start_time))
+  if (verbose) {
+    message("* basicepistats:::stat_year_based_prevalence_count__: ",
+            "assertions done; ", data.table::timetaken(assertion_start_time))
+  }
 
   # handle by & subset ---------------------------------------------------------
   by_subset_start_time <- proc.time()
@@ -360,7 +364,11 @@ stat_year_based_prevalence_count__ <- function(
   by <- handle_by_arg(
     by = by, dataset = x, subset = subset, subset_style = subset_style
   )
-  message("* handle by & subset done; ", data.table::timetaken(by_subset_start_time))
+  if (verbose) {
+    message("* basicepistats:::stat_year_based_prevalence_count__: ",
+            "handle by & subset done; ",
+            data.table::timetaken(by_subset_start_time))
+  }
 
   # working dataset ------------------------------------------------------------
   working_dataset_start_time <- proc.time()
@@ -382,8 +390,11 @@ stat_year_based_prevalence_count__ <- function(
     j = .N,
     keyby = names(dt)
   ]
-  message("* working dataset done; ",
-          data.table::timetaken(working_dataset_start_time))
+  if (verbose) {
+    message("* basicepistats:::stat_year_based_prevalence_count__: ",
+            "working dataset done; ",
+            data.table::timetaken(working_dataset_start_time))
+  }
 
   # counts ---------------------------------------------------------------------
   counts_start_time <- proc.time()
@@ -447,7 +458,10 @@ stat_year_based_prevalence_count__ <- function(
   })
   output <- data.table::rbindlist(output)
   output[is.na(output[["N"]]), "N" := 0L]
-  message("* counts done; ", data.table::timetaken(counts_start_time))
+  if (verbose) {
+    message("* basicepistats:::stat_year_based_prevalence_count__: ",
+            "counts done; ", data.table::timetaken(counts_start_time))
+  }
   # @codedoc_comment_block stat_year_based_prevalence_count__
   # The result is a table of counts by `observation_year`,
   # `full_years_since_entry`, and any user-requested stratifying columns.
@@ -466,8 +480,13 @@ stat_year_based_prevalence_count__ <- function(
     .SDcols = "N",
     by = eval(setdiff(nonvalue_col_nms, "full_years_since_entry"))
   ]
-  message("* final touches done; ", data.table::timetaken(final_touches_start_time))
-  message("* whole run done; ", data.table::timetaken(whole_run_start_time))
+  if (verbose) {
+    message("* basicepistats:::stat_year_based_prevalence_count__: ",
+            "final touches done; ",
+            data.table::timetaken(final_touches_start_time))
+    message("* basicepistats:::stat_year_based_prevalence_count__: ",
+            "whole run done; ", data.table::timetaken(whole_run_start_time))
+  }
   return(output[])
 }
 
@@ -579,6 +598,7 @@ stat_year_based_prevalent_record_count <- function(
   subset = NULL,
   subset_style = "zeros"
 ) {
+  verbose <- FALSE
   call_with_arg_list("stat_year_based_prevalence_count__")
 }
 
@@ -647,12 +667,11 @@ stat_year_based_prevalent_subject_count_ <- function(
   assert_prod_input_subset(subset, nrow(x))
   assert_prod_input_subset_style(subset_style)
 
-  subset <- handle_subset_arg(dataset = x)
-  if (is.null(subset)) {
-    subset <- rep(TRUE, nrow(x))
-  }
-
   subset <- local({
+    subset <- handle_subset_arg(dataset = x)
+    if (is.null(subset)) {
+      subset <- rep(TRUE, nrow(x))
+    }
     tmp_dt <- x[, .SD, .SDcols = c(subject_id_col_nm, entry_year_col_nm)]
     tmp_dt[, ".__row_number" := 1:nrow(tmp_dt)]
     tmp_dt <- tmp_dt[subset, ]
@@ -674,6 +693,7 @@ stat_year_based_prevalent_subject_count_ <- function(
     subset
   })
 
+  verbose <- FALSE
   call_with_arg_list("stat_year_based_prevalence_count__")
 }
 
