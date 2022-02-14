@@ -8,8 +8,8 @@
 stat_absolute_risk_ag(
   x,
   stratum_col_nms = NULL,
-  timescale_start_col_nm,
-  timescale_stop_col_nm,
+  interval_start_col_nm,
+  interval_stop_col_nm,
   event_count_col_nms,
   event_time_amount_col_nms,
   population_time_amount_col_nm
@@ -20,7 +20,7 @@ stat_absolute_risk_ag(
 
 \code{data.table} with the required columns (see other args). Tt must not have
 duplicated rows as identified by
-\code{c(stratum_col_nms, timescale_start_col_nm)}.
+\code{c(stratum_col_nms, interval_start_col_nm)}.
 
 Chiang, Chin Long, 1986,
 Introduction to stochastic processes in biostatistics,
@@ -33,21 +33,22 @@ ISBN-13 978-0471155003.}
 \code{stratum_col_nms = c("sex", "area")}
 }}
 
-\item{timescale_start_col_nm}{\verb{[character]} (no default)
+\item{interval_start_col_nm}{\verb{[character]} (no default)
 
-Identifies the start time of the bin for the desired timescale.
-E.g. \code{timescale_start_col_nm = "age_group_start"}.
+Identifies the start time of the interval for the desired timescale.
+E.g. \code{interval_start_col_nm = "age_group_start"}.
 
 This columns must have one of the classes \code{c("numeric", "integer", "Date")}.
 No missing values are allowed.}
 
-\item{timescale_stop_col_nm}{\verb{[character]} (no default)
+\item{interval_stop_col_nm}{\verb{[character]} (no default)
 
-Identifies the stop time of the bin for the desired timescale.
-E.g. \code{timescale_start_col_nm = "age_group_stop"}.
+Identifies the stop time of the interval for the desired timescale.
+E.g. \code{interval_stop_col_nm = "age_group_stop"}.
 
-This column must have the same class as \code{x[[timescale_start_col_nm]]}.
-No missing values are allowed.}
+This column must have the same class as \code{x[[interval_start_col_nm]]}.
+No missing values are allowed. Every stop value must be larger than the
+corresponding start value.}
 
 \item{event_count_col_nms}{\verb{[character]} (no default)
 
@@ -84,11 +85,11 @@ This column must be either \code{integer} or \code{numeric}. No missing \strong{
 values are allowed.}
 }
 \description{
-AKA crude risk, sometimes "cumulative incidence function" due to that
-estimation method. The tools described here can estimate the curve of the
-statistical probability of a subject having an event over a timescale.
-E.g. the curve of probabilities of having the first breast cancer diagnosis
-can be estimated for some population.
+Tools to estimate absolute risk curves. Absolute risk is also known as
+crude risk and sometimes "cumulative incidence function" due to the
+cumulative hazard rate estimation method. An absolute risk curve shows e.g.
+the statistical probability in some population of developing cancer
+(getting the first cancer diagnosis) over years of age.
 }
 \section{Under the hood}{
 
@@ -113,11 +114,11 @@ is computed as the sum of all the different hazard rates.
 \item The overall survival function is estimated via
 \code{exp(-cumsum(dt[["overall_hazard_rate"]]))}. This is performed separately
 for each stratum identified by \code{stratum_col_nms}, if any exist.
-The "overall event probability" for each bin, conditional on survival
-up to the start of the bin, is computed.
+The "overall event probability" for each interval, conditional on survival
+up to the start of the interval, is computed.
 \item Event-specific absolute risks are finally estimated via
 \code{cumsum(osl1 * cor * h / ohr)}, where \code{osl1} is the lag of the overall
-survival (survival probability up to the start of the bin),
+survival (survival probability up to the start of the interval),
 \code{cor} the conditional overall survival,
 \code{h} an event-specific hazard rate.
 }
@@ -125,23 +126,23 @@ survival (survival probability up to the start of the bin),
 
 \examples{
 dt <- data.table::data.table(
-  age_group_start = 0:99,
-  age_group_stop = 1:100,
-  cancer_count = 1:100,
-  death_count = (1:100 + 10L),
-  cancer_pyrs = 100:1,
-  death_pyrs = rep(0.0, 100),
-  pop_pyrs = rep(1e4, 100)
+  age_group_start = 0:100,
+  age_group_stop = c(1:100, 120L),
+  cancer_count = 1:101,
+  death_count = (1:101 + 10L),
+  cancer_pyrs = 101:1,
+  death_pyrs = rep(0.0, 101),
+  pop_pyrs = rep(1e4, 101)
 )
 dt <- rbind(data.table::copy(dt)[, "sex" := 1L],
             data.table::copy(dt)[, "sex" := 2L])
-dt[dt[["sex"]] == 2L, "cancer_count" := rep(1:10, each = 10L)]
-dt[dt[["sex"]] == 2L, "cancer_pyrs"  := rep(1.0, 100L)]
+dt[dt[["sex"]] == 2L, "cancer_count" := c(rep(1:10, each = 10L), 5L)]
+dt[dt[["sex"]] == 2L, "cancer_pyrs"  := c(rep(1.0, 100L), 5L)]
 ardt <- basicepistats::stat_absolute_risk_ag(
   x = dt,
   stratum_col_nms               = "sex",
-  timescale_start_col_nm        = "age_group_start",
-  timescale_stop_col_nm         = "age_group_stop",
+  interval_start_col_nm        = "age_group_start",
+  interval_stop_col_nm         = "age_group_stop",
   event_count_col_nms           = c("cancer_count", "death_count"),
   event_time_amount_col_nms     = c("cancer_pyrs" , "death_pyrs"),
   population_time_amount_col_nm = "pop_pyrs"

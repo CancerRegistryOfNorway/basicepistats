@@ -2,34 +2,34 @@
 
 #' @title Absolute Risk Curve
 #' @description
-#' AKA crude risk, sometimes "cumulative incidence function" due to that
-#' estimation method. The tools described here can estimate the curve of the
-#' statistical probability of a subject having an event over a timescale.
-#' E.g. the curve of probabilities of having the first breast cancer diagnosis
-#' can be estimated for some population.
+#' Tools to estimate absolute risk curves. Absolute risk is also known as
+#' crude risk and sometimes "cumulative incidence function" due to the
+#' cumulative hazard rate estimation method. An absolute risk curve shows e.g.
+#' the statistical probability in some population of developing cancer
+#' (getting the first cancer diagnosis) over years of age.
 #' @name absolute_risk_curve_tools
 
 #' @rdname absolute_risk_curve_tools
 #' @eval stat_absolute_risk_ag_docs()
 #' @examples
 #' dt <- data.table::data.table(
-#'   age_group_start = 0:99,
-#'   age_group_stop = 1:100,
-#'   cancer_count = 1:100,
-#'   death_count = (1:100 + 10L),
-#'   cancer_pyrs = 100:1,
-#'   death_pyrs = rep(0.0, 100),
-#'   pop_pyrs = rep(1e4, 100)
+#'   age_group_start = 0:100,
+#'   age_group_stop = c(1:100, 120L),
+#'   cancer_count = 1:101,
+#'   death_count = (1:101 + 10L),
+#'   cancer_pyrs = 101:1,
+#'   death_pyrs = rep(0.0, 101),
+#'   pop_pyrs = rep(1e4, 101)
 #' )
 #' dt <- rbind(data.table::copy(dt)[, "sex" := 1L],
 #'             data.table::copy(dt)[, "sex" := 2L])
-#' dt[dt[["sex"]] == 2L, "cancer_count" := rep(1:10, each = 10L)]
-#' dt[dt[["sex"]] == 2L, "cancer_pyrs"  := rep(1.0, 100L)]
+#' dt[dt[["sex"]] == 2L, "cancer_count" := c(rep(1:10, each = 10L), 5L)]
+#' dt[dt[["sex"]] == 2L, "cancer_pyrs"  := c(rep(1.0, 100L), 5L)]
 #' ardt <- basicepistats::stat_absolute_risk_ag(
 #'   x = dt,
 #'   stratum_col_nms               = "sex",
-#'   timescale_start_col_nm        = "age_group_start",
-#'   timescale_stop_col_nm         = "age_group_stop",
+#'   interval_start_col_nm        = "age_group_start",
+#'   interval_stop_col_nm         = "age_group_stop",
 #'   event_count_col_nms           = c("cancer_count", "death_count"),
 #'   event_time_amount_col_nms     = c("cancer_pyrs" , "death_pyrs"),
 #'   population_time_amount_col_nm = "pop_pyrs"
@@ -50,8 +50,8 @@
 stat_absolute_risk_ag <- function(
   x,
   stratum_col_nms = NULL,
-  timescale_start_col_nm,
-  timescale_stop_col_nm,
+  interval_start_col_nm,
+  interval_stop_col_nm,
   event_count_col_nms,
   event_time_amount_col_nms,
   population_time_amount_col_nm
@@ -72,62 +72,67 @@ stat_absolute_risk_ag <- function(
     )
   )
   # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
-  # @param timescale_start_col_nm `[character]` (no default)
+  # @param interval_start_col_nm `[character]` (no default)
   #
-  # Identifies the start time of the bin for the desired timescale.
-  # E.g. `timescale_start_col_nm = "age_group_start"`.
+  # Identifies the start time of the interval for the desired timescale.
+  # E.g. `interval_start_col_nm = "age_group_start"`.
   #
   # This columns must have one of the classes `c("numeric", "integer", "Date")`.
   # No missing values are allowed.
   # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
-  dbc::assert_is_character_nonNA_atom(timescale_start_col_nm)
+  dbc::assert_is_character_nonNA_atom(interval_start_col_nm)
   dbc::assert_is_one_of(
-    x[[timescale_start_col_nm]],
-    x_nm = paste0("x$", timescale_start_col_nm),
+    x[[interval_start_col_nm]],
+    x_nm = paste0("x$", interval_start_col_nm),
     funs = list(
       dbc::report_is_number_nonNA_vector,
       dbc::report_is_Date_nonNA_vector
     )
   )
   # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
-  # @param timescale_stop_col_nm `[character]` (no default)
+  # @param interval_stop_col_nm `[character]` (no default)
   #
-  # Identifies the stop time of the bin for the desired timescale.
-  # E.g. `timescale_start_col_nm = "age_group_stop"`.
+  # Identifies the stop time of the interval for the desired timescale.
+  # E.g. `interval_stop_col_nm = "age_group_stop"`.
   #
-  # This column must have the same class as `x[[timescale_start_col_nm]]`.
-  # No missing values are allowed.
+  # This column must have the same class as `x[[interval_start_col_nm]]`.
+  # No missing values are allowed. Every stop value must be larger than the
+  # corresponding start value.
   # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
-  dbc::assert_is_character_nonNA_atom(timescale_stop_col_nm)
+  dbc::assert_is_character_nonNA_atom(interval_stop_col_nm)
   dbc::report_to_assertion(
     dbc::expressions_to_report(
       list(
         quote(identical(
-          class(x[[timescale_start_col_nm]]),
-          class(x[[timescale_stop_col_nm]])
+          class(x[[interval_start_col_nm]]),
+          class(x[[interval_stop_col_nm]])
         )),
-        quote(x[[timescale_start_col_nm]] < x[[timescale_stop_col_nm]])
+        quote(x[[interval_start_col_nm]] < x[[interval_stop_col_nm]])
       ),
       fail_messages = c(
         paste0(
-          "x$", timescale_start_col_nm, " and ",
-          "x$", timescale_stop_col_nm, " had different classes: ",
-          deparse(class(x[[timescale_start_col_nm]])), " vs. ",
-          deparse(class(x[[timescale_stop_col_nm]]))
+          "x$", interval_start_col_nm, " and ",
+          "x$", interval_stop_col_nm, " had different classes: ",
+          deparse(class(x[[interval_start_col_nm]])), " vs. ",
+          deparse(class(x[[interval_stop_col_nm]]))
         ),
-        NA_character_
+        paste0(
+          "x$", interval_start_col_nm, " < ",
+          "x$", interval_stop_col_nm, " not true for all observations; ",
+          "numbers of first five invalid rows: ${deparse(utils::head(wh_fail))}"
+        )
       ),
       pass_messages = c(
         paste0(
-          "x$", timescale_start_col_nm, " and ",
-          "x$", timescale_stop_col_nm, " had the same classes."
+          "x$", interval_start_col_nm, " and ",
+          "x$", interval_stop_col_nm, " had the same classes."
         ),
         NA_character_
       ),
       call = stat_absolute_risk_ag_call
     )
   )
-  dbc::assert_is_nonNA(x[[timescale_stop_col_nm]])
+  dbc::assert_is_nonNA(x[[interval_stop_col_nm]])
   # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
   # @param event_count_col_nms `[character]` (no default)
   #
@@ -202,12 +207,12 @@ stat_absolute_risk_ag <- function(
   #
   # `data.table` with the required columns (see other args). Tt must not have
   # duplicated rows as identified by
-  # `c(stratum_col_nms, timescale_start_col_nm)`.
+  # `c(stratum_col_nms, interval_start_col_nm)`.
   # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
   dt_col_nms <- c(
     stratum_col_nms,
-    timescale_start_col_nm,
-    timescale_stop_col_nm,
+    interval_start_col_nm,
+    interval_stop_col_nm,
     event_count_col_nms,
     event_time_amount_col_nms,
     population_time_amount_col_nm
@@ -216,7 +221,7 @@ stat_absolute_risk_ag <- function(
   dbc::report_to_assertion(
     dbc::expressions_to_report(
       list(quote(
-        !duplicated(x, by = c(stratum_col_nms, timescale_start_col_nm))
+        !duplicated(x, by = c(stratum_col_nms, interval_start_col_nm))
       )),
       call = stat_absolute_risk_ag_call
     )
@@ -241,7 +246,7 @@ stat_absolute_risk_ag <- function(
     add = TRUE
   )
   key_col_nms <- c(
-    tmp_stratum_col_nms, timescale_start_col_nm, timescale_stop_col_nm
+    tmp_stratum_col_nms, interval_start_col_nm, interval_stop_col_nm
   )
   data.table::setkeyv(dt, key_col_nms)
 
@@ -312,19 +317,30 @@ stat_absolute_risk_ag <- function(
   # 3. The overall survival function is estimated via
   #    `exp(-cumsum(dt[["overall_hazard_rate"]]))`. This is performed separately
   #    for each stratum identified by `stratum_col_nms`, if any exist.
-  #    The "overall event probability" for each bin, conditional on survival
-  #    up to the start of the bin, is computed.
+  #    The "overall event probability" for each interval, conditional on survival
+  #    up to the start of the interval, is computed.
   # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
   dt[
-    # see ?data.table::gforce
-    j = "overall_survival" := lapply(.SD, cumsum),
-    by = eval(tmp_stratum_col_nms),
-    .SDcols = "overall_hazard_rate"
+    j = "timescale_interval_width" := .SD[[1L]] - .SD[[2L]],
+    .SDcols = c(interval_stop_col_nm, interval_start_col_nm)
+  ]
+  # overall_cumulative_hazard_date up to the end of the interval
+  dt[
+    j = "overall_cumulative_hazard_date" := .SD[[1L]] * .SD[[2L]],
+    .SDcols = c("overall_hazard_rate", "timescale_interval_width")
   ]
   dt[
-    j = "overall_survival" := exp(-.SD[[1L]]),
-    .SDcols = "overall_survival"
+    # see ?data.table::gforce
+    j = "overall_cumulative_hazard_date" := lapply(.SD, cumsum),
+    .SDcols = "overall_cumulative_hazard_date"
   ]
+  # overall_cumulative_hazard_date up to the end of the interval
+  dt[
+    j = "overall_survival" := exp(-.SD[[1L]]),
+    .SDcols = "overall_cumulative_hazard_date"
+  ]
+  # overall_cumulative_hazard_date up to the end of the previous interval
+  # (start of current interval)
   dt[
     j = "overall_survival_lag_1" := data.table::shift(
       .SD[[1L]], type = "lag", n = 1L, fill = 1.0
@@ -332,10 +348,14 @@ stat_absolute_risk_ag <- function(
     by = eval(tmp_stratum_col_nms),
     .SDcols = "overall_survival"
   ]
+  # probability of surviving current interval, conditional on having survived
+  # up to the start of it
   dt[
     j = "conditional_overall_survival" := .SD[[1L]] / .SD[[2L]],
     .SDcols = c("overall_survival", "overall_survival_lag_1")
   ]
+  # probability of getting any event, conditional on having avoided them all
+  # up to the start of the interval
   dt[
     j = "conditional_overall_risk" := 1.0 - .SD[[1L]],
     .SDcols = "conditional_overall_survival"
@@ -345,7 +365,7 @@ stat_absolute_risk_ag <- function(
   #
   # 4. Event-specific absolute risks are finally estimated via
   #    `cumsum(osl1 * cor * h / ohr)`, where `osl1` is the lag of the overall
-  #     survival (survival probability up to the start of the bin),
+  #     survival (survival probability up to the start of the interval),
   #    `cor` the conditional overall survival,
   #    `h` an event-specific hazard rate.
   #
@@ -376,8 +396,8 @@ stat_absolute_risk_ag <- function(
   # final touches --------------------------------------------------------------
   keep_col_nms <- c(
     tmp_stratum_col_nms,
-    timescale_start_col_nm,
-    timescale_stop_col_nm,
+    interval_start_col_nm,
+    interval_stop_col_nm,
     event_count_col_nms,
     event_time_amount_col_nms,
     population_time_amount_col_nm,
