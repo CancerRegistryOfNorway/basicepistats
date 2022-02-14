@@ -35,6 +35,13 @@
 #'   population_time_amount_col_nm = "pop_pyrs"
 #' )
 #'
+#' # overall survival and event-specific absolute risks sum to one!
+#' stopifnot(all.equal(
+#'   ardt[["overall_survival"]] + ardt[["event_1_absolute_risk"]] +
+#'     ardt[["event_2_absolute_risk"]],
+#'   rep(1.0, nrow(ardt))
+#' ))
+#'
 #' plot(event_1_absolute_risk ~ age_group_stop,
 #'      data = ardt[ardt[["sex"]] == 1L, ], col = "black", type = "l")
 #' lines(event_1_absolute_risk ~ age_group_stop,
@@ -94,19 +101,28 @@ stat_absolute_risk_ag <- function(
   dbc::assert_is_character_nonNA_atom(timescale_stop_col_nm)
   dbc::report_to_assertion(
     dbc::expressions_to_report(
-      list(quote(identical(
-        class(x[[timescale_start_col_nm]]),
-        class(x[[timescale_stop_col_nm]])
-      ))),
-      fail_messages = paste0(
-        "x$", timescale_start_col_nm, " and ",
-        "x$", timescale_stop_col_nm, " had different classes: ",
-        deparse(class(x[[timescale_start_col_nm]])), " vs. ",
-        deparse(class(x[[timescale_stop_col_nm]]))
+      list(
+        quote(identical(
+          class(x[[timescale_start_col_nm]]),
+          class(x[[timescale_stop_col_nm]])
+        )),
+        quote(x[[timescale_start_col_nm]] < x[[timescale_stop_col_nm]])
       ),
-      pass_messages = paste0(
-        "x$", timescale_start_col_nm, " and ",
-        "x$", timescale_stop_col_nm, " had the same classes."
+      fail_messages = c(
+        paste0(
+          "x$", timescale_start_col_nm, " and ",
+          "x$", timescale_stop_col_nm, " had different classes: ",
+          deparse(class(x[[timescale_start_col_nm]])), " vs. ",
+          deparse(class(x[[timescale_stop_col_nm]]))
+        ),
+        NA_character_
+      ),
+      pass_messages = c(
+        paste0(
+          "x$", timescale_start_col_nm, " and ",
+          "x$", timescale_stop_col_nm, " had the same classes."
+        ),
+        NA_character_
       ),
       call = stat_absolute_risk_ag_call
     )
@@ -328,8 +344,10 @@ stat_absolute_risk_ag <- function(
   # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
   #
   # 4. Event-specific absolute risks are finally estimated via
-  #    `conditional_overall_risk * h / overall_hazard_rate`, where
-  #    `h` is an event-specific hazard rate.
+  #    `cumsum(osl1 * cor * h / ohr)`, where `osl1` is the lag of the overall
+  #     survival (survival probability up to the start of the bin),
+  #    `cor` the conditional overall survival,
+  #    `h` an event-specific hazard rate.
   #
   # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
   event_absolute_risk_col_nms <- sub(
@@ -338,14 +356,41 @@ stat_absolute_risk_ag <- function(
     event_hazard_rate_col_nms
   )
   lapply(seq_along(event_hazard_rate_col_nms), function(i) {
-    h <- dt[[paste0(event_hazard_rate_col_nms[i])]]
+    osl1 <- dt[["overall_survival_lag_1"]]
+    h <- dt[[event_hazard_rate_col_nms[i]]]
+    cor <- dt[["conditional_overall_risk"]]
+    ohr <- dt[["overall_hazard_rate"]]
     data.table::set(
       dt,
       j = event_absolute_risk_col_nms[i],
-      value = dt[["conditional_overall_risk"]] * h / dt[["overall_hazard_rate"]]
+      value = osl1 * cor * h / ohr
     )
     NULL
   })
+  dt[
+    j = (event_absolute_risk_col_nms) := lapply(.SD, cumsum),
+    .SDcols = event_absolute_risk_col_nms,
+    by = eval(tmp_stratum_col_nms)
+  ]
+
+  # final touches --------------------------------------------------------------
+  keep_col_nms <- c(
+    tmp_stratum_col_nms,
+    timescale_start_col_nm,
+    timescale_stop_col_nm,
+    event_count_col_nms,
+    event_time_amount_col_nms,
+    population_time_amount_col_nm,
+    event_hazard_rate_col_nms,
+    event_absolute_risk_col_nms,
+    "overall_hazard_rate",
+    "overall_survival"
+  )
+  dt <- dt[
+    j = .SD,
+    .SDcols = keep_col_nms
+  ]
+  data.table::setkeyv(dt, key_col_nms)
 
   return(dt[])
 }

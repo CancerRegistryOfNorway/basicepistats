@@ -116,8 +116,10 @@ for each stratum identified by \code{stratum_col_nms}, if any exist.
 The "overall event probability" for each bin, conditional on survival
 up to the start of the bin, is computed.
 \item Event-specific absolute risks are finally estimated via
-\code{conditional_overall_risk * h / overall_hazard_rate}, where
-\code{h} is an event-specific hazard rate.
+\code{cumsum(osl1 * cor * h / ohr)}, where \code{osl1} is the lag of the overall
+survival (survival probability up to the start of the bin),
+\code{cor} the conditional overall survival,
+\code{h} an event-specific hazard rate.
 }
 }
 
@@ -144,6 +146,13 @@ ardt <- basicepistats::stat_absolute_risk_ag(
   event_time_amount_col_nms     = c("cancer_pyrs" , "death_pyrs"),
   population_time_amount_col_nm = "pop_pyrs"
 )
+
+# overall survival and event-specific absolute risks sum to one!
+stopifnot(all.equal(
+  ardt[["overall_survival"]] + ardt[["event_1_absolute_risk"]] +
+    ardt[["event_2_absolute_risk"]],
+  rep(1.0, nrow(ardt))
+))
 
 plot(event_1_absolute_risk ~ age_group_stop,
      data = ardt[ardt[["sex"]] == 1L, ], col = "black", type = "l")
