@@ -231,18 +231,15 @@ stat_absolute_risk_ag <- function(
   })
   data.table::setDT(dt)
   data.table::setnames(dt, dt_col_nms)
-  if (is.null(stratum_col_nms)) {
-    stratum_col_nms <- ".__competing_event_count_dummy"
-    data.table::set(dt, j = stratum_col_nms, value = TRUE)
-    on.exit(
-      data.table::set(dt, j = stratum_col_nms, value = NULL),
-      add = TRUE
-    )
-  }
+  stratum_col_nms <- c("stratum_col_dummy", stratum_col_nms)
+  data.table::set(dt, j = stratum_col_nms, value = TRUE)
   tmp_stratum_col_nms <- paste0(".__tmp_", stratum_col_nms)
   data.table::setnames(dt, stratum_col_nms, tmp_stratum_col_nms)
   on.exit(
-    data.table::setnames(dt, tmp_stratum_col_nms, stratum_col_nms),
+    {
+      data.table::setnames(dt, tmp_stratum_col_nms, stratum_col_nms)
+      data.table::set(dt, j = stratum_col_nms[1L], value = NULL)
+    },
     add = TRUE
   )
   key_col_nms <- c(
