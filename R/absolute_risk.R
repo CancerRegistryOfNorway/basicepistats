@@ -14,38 +14,59 @@
 #' @examples
 #' dt <- data.table::data.table(
 #'   age_group_start = 0:100,
-#'   age_group_stop = c(1:100, 120L),
-#'   cancer_count = 1:101,
-#'   death_count = (1:101 + 10L),
-#'   cancer_pyrs = 101:1,
-#'   death_pyrs = rep(0.0, 101),
-#'   pop_pyrs = rep(1e4, 101)
+#'   age_group_stop  = c(1:100, 120L),
+#'   cancer_count    = 1:101,
+#'   death_count     = (1:101 + 10L),
+#'   pyrs            = rep(1e4, 101)
 #' )
 #' dt <- rbind(data.table::copy(dt)[, "sex" := 1L],
 #'             data.table::copy(dt)[, "sex" := 2L])
 #' dt[dt[["sex"]] == 2L, "cancer_count" := c(rep(1:10, each = 10L), 5L)]
-#' dt[dt[["sex"]] == 2L, "cancer_pyrs"  := c(rep(1.0, 100L), 5L)]
 #' ardt <- basicepistats::stat_absolute_risk_ag(
-#'   x = dt,
-#'   stratum_col_nms               = "sex",
-#'   interval_start_col_nm        = "age_group_start",
-#'   interval_stop_col_nm         = "age_group_stop",
-#'   event_count_col_nms           = c("cancer_count", "death_count"),
-#'   event_time_amount_col_nms     = c("cancer_pyrs" , "death_pyrs"),
-#'   population_time_amount_col_nm = "pop_pyrs"
+#'   x                     = dt,
+#'   stratum_col_nms       = "sex",
+#'   interval_start_col_nm = "age_group_start",
+#'   interval_stop_col_nm  = "age_group_stop",
+#'   event_count_col_nms   = c(cancer = "cancer_count", death = "death_count"),
+#'   at_risk_time_col_nm   = "pyrs"
 #' )
 #'
 #' # overall survival and event-specific absolute risks sum to one!
 #' stopifnot(all.equal(
-#'   ardt[["overall_survival"]] + ardt[["event_1_absolute_risk"]] +
-#'     ardt[["event_2_absolute_risk"]],
+#'   ardt[["overall_survival"]] + ardt[["cancer_absolute_risk"]] +
+#'     ardt[["death_absolute_risk"]],
 #'   rep(1.0, nrow(ardt))
 #' ))
 #'
-#' plot(event_1_absolute_risk ~ age_group_stop,
-#'      data = ardt[ardt[["sex"]] == 1L, ], col = "black", type = "l")
-#' lines(event_1_absolute_risk ~ age_group_stop,
+#' plot( cancer_absolute_risk ~ age_group_stop,
+#'       data = ardt[ardt[["sex"]] == 1L, ], col = "black", type = "l",
+#'       ylim = c(0, max(ardt[["cancer_absolute_risk"]])))
+#' lines(cancer_absolute_risk ~ age_group_stop,
 #'       data = ardt[ardt[["sex"]] == 2L, ], col = "red")
+#'
+#' plot( death_absolute_risk ~ age_group_stop,
+#'       data = ardt[ardt[["sex"]] == 1L, ], col = "black", type = "l",
+#'       ylim = c(0, max(ardt[["death_absolute_risk"]])))
+#' lines(death_absolute_risk ~ age_group_stop,
+#'       data = ardt[ardt[["sex"]] == 2L, ], col = "red")
+#'
+#' # this example mostly for testing that basicepistats::stat_absolute_risk_ag
+#' # works as intended. in this example, 5 people all get cancer and none die.
+#' # one gets cancer in the middle of each interval.
+#' dt <- data.table::data.table(
+#'   age_group_start = 0:4 * 20L,
+#'   age_group_stop  = 1:5 * 20L,
+#'   cancer_count    = rep(1L, 5L),
+#'   death_count     = rep(0L, 5L),
+#'   pyrs            = c(100, 80, 60, 40, 20) - 10
+#' )
+#' ardt <- basicepistats::stat_absolute_risk_ag(
+#'   x                     = dt,
+#'   interval_start_col_nm = "age_group_start",
+#'   interval_stop_col_nm  = "age_group_stop",
+#'   event_count_col_nms   = c(cancer = "cancer_count", death = "death_count"),
+#'   at_risk_time_col_nm   = "pyrs"
+#' )
 #' @export
 stat_absolute_risk_ag <- function(
   x,
@@ -53,8 +74,7 @@ stat_absolute_risk_ag <- function(
   interval_start_col_nm,
   interval_stop_col_nm,
   event_count_col_nms,
-  event_time_amount_col_nms,
-  population_time_amount_col_nm
+  at_risk_time_col_nm
 ) {
   stat_absolute_risk_ag_call <- match.call()
   # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
@@ -143,6 +163,7 @@ stat_absolute_risk_ag <- function(
   # No missing values are allowed.
   # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
   dbc::assert_is_character_nonNA_vector(event_count_col_nms)
+  dbc::assert_is_uniquely_named(event_count_col_nms)
   lapply(event_count_col_nms, function(col_nm) {
     dbc::assert_is_integer_nonNA_gtezero_vector(
       x[[col_nm]],
@@ -157,96 +178,117 @@ stat_absolute_risk_ag <- function(
     )
   )
   # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
-  # @param event_time_amount_col_nms `[character]` (no default)
+  # @param at_risk_time_col_nm `[character]` (no default)
   #
-  # Identifies the column (one or more) containing counts of events.
-  # E.g. `event_count_col_nm = c("event_1_count", "event_2_count")`.
+  # Identifies the column containing time-at-risk values. That is, time at risk
+  # of all the possible events (which should exclude e.g. those who already have
+  # cancer, if cancer is one of the events).
+  # E.g. `at_risk_time_col_nm = "pyrs"`.
   #
-  # See section **Under the hood** for more information about the purpose of
-  # this argument.
-  #
-  # There must be as many elements in
-  # `event_count_col_nms` as in `event_time_amount_col_nms`. These two arguments
-  # are assumed to relate to each other elementwise, e.g. the first elements
-  # of both are assumed to belong to the same event.
-  #
-  # Each of these columns must be either `integer` or `numeric`. No missing
-  # values are allowed. All values must be >= 0.
+  # This column must be either `integer` or `numeric`. All values must be >=
+  # and not missing.
   # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
-  dbc::assert_is_character_nonNA_vector(event_time_amount_col_nms)
-  lapply(event_time_amount_col_nms, function(col_nm) {
-    dbc::assert_is_number_nonNA_gtezero_vector(
-      x[[col_nm]],
-      x_nm = paste0("x$", col_nm),
-      call = stat_absolute_risk_ag_call
-    )
-  })
-  dbc::report_to_assertion(
-    dbc::expressions_to_report(
-      list(quote(
-        length(event_count_col_nms) == length(event_time_amount_col_nms)
-      )),
-      call = stat_absolute_risk_ag_call
-    )
-  )
-  # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
-  # @param population_time_amount_col_nm `[character]` (no default)
-  #
-  # Identifies the column containing time amounts for the (whole, general)
-  # population regardless of what events the subjects in the population may
-  # have encountered. E.g. general population person-years from the national
-  # statistics office. E.g. `population_time_amount_col_nm = "pop_pyrs"`.
-  #
-  # This column must be either `integer` or `numeric`. No missing **NOR ZERO**
-  # values are allowed.
-  # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
-  dbc::assert_is_character_nonNA_atom(population_time_amount_col_nm)
-  dbc::assert_is_number_nonNA_gtzero_vector(x[[population_time_amount_col_nm]])
+  dbc::assert_is_character_nonNA_atom(at_risk_time_col_nm)
+  dbc::assert_is_number_nonNA_gtezero_vector(x[[at_risk_time_col_nm]])
   # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
   # @param x `[data.table]` (no default)
   #
-  # `data.table` with the required columns (see other args). Tt must not have
+  # `data.table` with the required columns (see other args). It must not have
   # duplicated rows as identified by
   # `c(stratum_col_nms, interval_start_col_nm)`.
   # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
-  dt_col_nms <- c(
-    stratum_col_nms,
-    interval_start_col_nm,
-    interval_stop_col_nm,
-    event_count_col_nms,
-    event_time_amount_col_nms,
-    population_time_amount_col_nm
+  col_nm_dt <- data.table::data.table(
+    x = c(
+      NA_character_,
+      stratum_col_nms,
+      interval_start_col_nm,
+      interval_stop_col_nm,
+      event_count_col_nms,
+      at_risk_time_col_nm,
+      rep(NA_character_, 7L)
+    ),
+    tmp = c(
+      "stratum_1",
+      paste0(
+        rep("stratum_", length(stratum_col_nms)),
+        seq_along(stratum_col_nms) + 1L
+      ),
+      "interval_start",
+      "interval_stop",
+      paste0("event_", seq_along(event_count_col_nms), "_count"),
+      "at_risk_time",
+      paste0("event_", seq_along(event_count_col_nms), "_hazard_rate"),
+      paste0("event_", seq_along(event_count_col_nms), "_absolute_risk"),
+      "overall_hazard_rate",
+      "overall_cumulative_hazard_rate",
+      "overall_survival"
+    ),
+    output = c(
+      NA_character_,
+      stratum_col_nms,
+      interval_start_col_nm,
+      interval_stop_col_nm,
+      event_count_col_nms,
+      at_risk_time_col_nm,
+      rep(NA_character_, 2L),
+      paste0(names(event_count_col_nms), "_absolute_risk"),
+      rep(NA_character_, 2L),
+      "overall_survival"
+    ),
+    type = c(
+      rep("stratum", length(stratum_col_nms) + 1L),
+      rep("interval", 2L),
+      rep("event_count", length(event_count_col_nms)),
+      "at_risk",
+      rep("event_hazard_rate", 2L),
+      rep("event_absolute_risk", 2L),
+      "overall_hazard_rate",
+      "overall_cumulative_hazard_rate",
+      "overall_survival"
+    )
   )
-  dbc::assert_is_data.table_with_required_names(x, required_names = dt_col_nms)
+  tmp_col_nm_sets <- split(col_nm_dt[["tmp"]], f = col_nm_dt[["type"]])
+  col_nm_dt[
+    j = "is_key" := col_nm_dt[["type"]] %in% c("stratum", "interval")
+  ]
+  tmp_col_nm_sets[["key"]] <- col_nm_dt[["tmp"]][col_nm_dt[["is_key"]]]
+  col_nm_dt[
+    j = "identifies_unique" := col_nm_dt[["is_key"]] &
+      !col_nm_dt[["tmp"]] %in% "interval_stop"
+  ]
+  tmp_col_nm_sets[["unique_id"]] <- col_nm_dt[["tmp"]][
+    col_nm_dt[["identifies_unique"]]
+  ]
+  dbc::assert_is_data.table_with_required_names(
+    x, required_names = setdiff(col_nm_dt[["x"]], NA_character_)
+  )
   dbc::report_to_assertion(
     dbc::expressions_to_report(
       list(quote(
-        !duplicated(x, by = c(stratum_col_nms, interval_start_col_nm))
+        !duplicated(x, by = intersect(tmp_col_nm_sets[["unique_id"]], names(x)))
       )),
       call = stat_absolute_risk_ag_call
     )
   )
-  dt <- lapply(dt_col_nms, function(col_nm) {
-    x[[col_nm]]
+  dt <- local({
+    type_set <- c("stratum", "interval", "event_count", "at_risk")
+    col_no_set <- which(col_nm_dt[["type"]] %in% type_set)
+    dt <- lapply(col_no_set, function(i) {
+      x_col_nm <- col_nm_dt[["x"]][i]
+      tmp_col_nm <- col_nm_dt[["tmp"]][i]
+      if (tmp_col_nm == "stratum_1") {
+        return(rep(TRUE, nrow(x)))
+      }
+      x[[x_col_nm]]
+    })
+    data.table::setDT(dt)
+    data.table::setnames(
+      dt, col_nm_dt[["tmp"]][1:which(col_nm_dt[["tmp"]] == "at_risk_time")]
+    )
+    data.table::setkeyv(    dt, tmp_col_nm_sets[["key"]])
+    data.table::setcolorder(dt, intersect(col_nm_dt[["tmp"]], names(dt)))
+    dt[]
   })
-  data.table::setDT(dt)
-  data.table::setnames(dt, dt_col_nms)
-  stratum_col_nms <- c("stratum_col_dummy", stratum_col_nms)
-  data.table::set(dt, j = stratum_col_nms, value = TRUE)
-  tmp_stratum_col_nms <- paste0(".__tmp_", stratum_col_nms)
-  data.table::setnames(dt, stratum_col_nms, tmp_stratum_col_nms)
-  on.exit(
-    {
-      data.table::setnames(dt, tmp_stratum_col_nms, stratum_col_nms)
-      data.table::set(dt, j = stratum_col_nms[1L], value = NULL)
-    },
-    add = TRUE
-  )
-  key_col_nms <- c(
-    tmp_stratum_col_nms, interval_start_col_nm, interval_stop_col_nm
-  )
-  data.table::setkeyv(dt, key_col_nms)
-
   # @codedoc_comment_block method_reference(basicepistats::stat_absolute_risk_ag)
   #    Chiang, Chin Long, 1986,
   #    Introduction to stochastic processes in biostatistics,
@@ -262,48 +304,32 @@ stat_absolute_risk_ag <- function(
   # The estimation of absolute risk curves is performed via the following steps
   # on working dataset `dt` created based on `x`:
   #
-  # 1. At-risk time amounts are computed by subtracting each event time amount
-  #    from `dt[[population_time_amount_col_nm]]`. This is the total amount of
-  #    time in each stratum that the population spent before/without having any
-  #    of the events in question. E.g. time the population spent alive and
-  #    cancer-free. This is collected into column `dt[["at_risk_time_amount"]]`.
   # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
-  data.table::set(
-    dt,
-    j = "at_risk_time_amount",
-    value = dt[[population_time_amount_col_nm]]
-  )
-  lapply(event_time_amount_col_nms, function(col_nm) {
-    data.table::set(
-      dt,
-      j = "at_risk_time_amount",
-      value = dt[["at_risk_time_amount"]] - dt[[col_nm]]
-    )
-    NULL
-  })
 
   # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
   #
-  # 2. The hazard rate of each event is estimated via
-  #    `dt[[event_count_col_nms[i]]] / dt[["at_risk_time_amount"]]` for
+  # 1. The hazard rate of each event is estimated via
+  #    `dt[[event_count_col_nms[i]]] / dt[[at_risk_time_col_nm]]` for
   #    each `i in seq_along(event_count_col_nms)`. An "overall hazard rate"
   #    is computed as the sum of all the different hazard rates.
   # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
-  event_hazard_rate_col_nms <- paste0(
-    "event_", seq_along(event_count_col_nms),
-    "_hazard_rate"
-  )
+  dt[
+    j = "interval_width" := .SD[[2L]] - .SD[[1L]],
+    .SDcols = tmp_col_nm_sets[["interval"]]
+  ]
   dt[, "overall_hazard_rate" := 0.0]
-  lapply(seq_along(event_count_col_nms), function(i) {
+  lapply(seq_along(tmp_col_nm_sets[["event_count"]]), function(i) {
+    count_col_nm <- tmp_col_nm_sets[["event_count"]][i]
+    haz_col_nm   <- tmp_col_nm_sets[["event_hazard_rate"]][i]
     data.table::set(
       dt,
-      j = event_hazard_rate_col_nms[i],
-      value = dt[[event_count_col_nms[i]]] / dt[["at_risk_time_amount"]]
+      j = haz_col_nm,
+      value = dt[[count_col_nm]] / dt[["at_risk_time"]]
     )
     data.table::set(
       dt,
       j = "overall_hazard_rate",
-      value = dt[["overall_hazard_rate"]] + dt[[event_hazard_rate_col_nms[i]]]
+      value = dt[["overall_hazard_rate"]] + dt[[haz_col_nm]]
     )
     NULL
   })
@@ -311,38 +337,36 @@ stat_absolute_risk_ag <- function(
 
   # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
   #
-  # 3. The overall survival function is estimated via
-  #    `exp(-cumsum(dt[["overall_hazard_rate"]]))`. This is performed separately
+  # 2. The overall survival function is estimated via
+  #    `exp(-cumsum(dt[["overall_hazard_rate"]] * dt[["interval_width"]]))`.
+  #    This is performed separately
   #    for each stratum identified by `stratum_col_nms`, if any exist.
   #    The "overall event probability" for each interval, conditional on survival
   #    up to the start of the interval, is computed.
   # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
+  # overall_cumulative_hazard_rate up to the end of the interval
   dt[
-    j = "timescale_interval_width" := .SD[[1L]] - .SD[[2L]],
-    .SDcols = c(interval_stop_col_nm, interval_start_col_nm)
-  ]
-  # overall_cumulative_hazard_date up to the end of the interval
-  dt[
-    j = "overall_cumulative_hazard_date" := .SD[[1L]] * .SD[[2L]],
-    .SDcols = c("overall_hazard_rate", "timescale_interval_width")
+    j = "overall_cumulative_hazard_rate" := .SD[[1L]] * .SD[[2L]],
+    .SDcols = c("overall_hazard_rate", "interval_width")
   ]
   dt[
     # see ?data.table::gforce
-    j = "overall_cumulative_hazard_date" := lapply(.SD, cumsum),
-    .SDcols = "overall_cumulative_hazard_date"
+    j = "overall_cumulative_hazard_rate" := lapply(.SD, cumsum),
+    .SDcols = "overall_cumulative_hazard_rate",
+    by = eval(tmp_col_nm_sets[["stratum"]])
   ]
-  # overall_cumulative_hazard_date up to the end of the interval
+  # overall_cumulative_hazard_rate up to the end of the interval
   dt[
     j = "overall_survival" := exp(-.SD[[1L]]),
-    .SDcols = "overall_cumulative_hazard_date"
+    .SDcols = "overall_cumulative_hazard_rate"
   ]
-  # overall_cumulative_hazard_date up to the end of the previous interval
+  # overall_cumulative_hazard_rate up to the end of the previous interval
   # (start of current interval)
   dt[
     j = "overall_survival_lag_1" := data.table::shift(
       .SD[[1L]], type = "lag", n = 1L, fill = 1.0
     ),
-    by = eval(tmp_stratum_col_nms),
+    by = eval(tmp_col_nm_sets[["stratum"]]),
     .SDcols = "overall_survival"
   ]
   # probability of surviving current interval, conditional on having survived
@@ -360,54 +384,41 @@ stat_absolute_risk_ag <- function(
 
   # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
   #
-  # 4. Event-specific absolute risks are finally estimated via
+  # 3. Event-specific absolute risks are finally estimated via
   #    `cumsum(osl1 * cor * h / ohr)`, where `osl1` is the lag of the overall
   #     survival (survival probability up to the start of the interval),
   #    `cor` the conditional overall survival,
   #    `h` an event-specific hazard rate.
   #
   # @codedoc_comment_block basicepistats::stat_absolute_risk_ag
-  event_absolute_risk_col_nms <- sub(
-    "hazard_rate",
-    "absolute_risk",
-    event_hazard_rate_col_nms
-  )
-  lapply(seq_along(event_hazard_rate_col_nms), function(i) {
-    osl1 <- dt[["overall_survival_lag_1"]]
-    h <- dt[[event_hazard_rate_col_nms[i]]]
-    cor <- dt[["conditional_overall_risk"]]
-    ohr <- dt[["overall_hazard_rate"]]
-    data.table::set(
-      dt,
-      j = event_absolute_risk_col_nms[i],
-      value = osl1 * cor * h / ohr
-    )
+  local({
+    lapply(seq_along(tmp_col_nm_sets[["event_hazard_rate"]]), function(i) {
+      osl1 <- dt[["overall_survival_lag_1"]]
+      h <- dt[[tmp_col_nm_sets[["event_hazard_rate"]][i]]]
+      cor <- dt[["conditional_overall_risk"]]
+      ohr <- dt[["overall_hazard_rate"]]
+      data.table::set(
+        dt,
+        j = tmp_col_nm_sets[["event_absolute_risk"]][i],
+        value = osl1 * cor * h / ohr
+      )
+      NULL
+    })
+    dt[
+      j = (tmp_col_nm_sets[["event_absolute_risk"]]) := lapply(.SD, cumsum),
+      .SDcols = tmp_col_nm_sets[["event_absolute_risk"]],
+      by = eval(tmp_col_nm_sets[["stratum"]])
+    ]
     NULL
   })
-  dt[
-    j = (event_absolute_risk_col_nms) := lapply(.SD, cumsum),
-    .SDcols = event_absolute_risk_col_nms,
-    by = eval(tmp_stratum_col_nms)
-  ]
 
   # final touches --------------------------------------------------------------
-  keep_col_nms <- c(
-    tmp_stratum_col_nms,
-    interval_start_col_nm,
-    interval_stop_col_nm,
-    event_count_col_nms,
-    event_time_amount_col_nms,
-    population_time_amount_col_nm,
-    event_hazard_rate_col_nms,
-    event_absolute_risk_col_nms,
-    "overall_hazard_rate",
-    "overall_survival"
-  )
   dt <- dt[
     j = .SD,
-    .SDcols = keep_col_nms
+    .SDcols = col_nm_dt[["tmp"]][!is.na(col_nm_dt[["output"]])]
   ]
-  data.table::setkeyv(dt, key_col_nms)
+  data.table::setkeyv( dt, intersect(tmp_col_nm_sets[["key"]], names(dt)))
+  data.table::setnames(dt, col_nm_dt[["output"]][!is.na(col_nm_dt[["output"]])])
 
   return(dt[])
 }

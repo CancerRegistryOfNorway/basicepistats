@@ -11,14 +11,13 @@ stat_absolute_risk_ag(
   interval_start_col_nm,
   interval_stop_col_nm,
   event_count_col_nms,
-  event_time_amount_col_nms,
-  population_time_amount_col_nm
+  at_risk_time_col_nm
 )
 }
 \arguments{
 \item{x}{\verb{[data.table]} (no default)
 
-\code{data.table} with the required columns (see other args). Tt must not have
+\code{data.table} with the required columns (see other args). It must not have
 duplicated rows as identified by
 \code{c(stratum_col_nms, interval_start_col_nm)}.
 
@@ -58,31 +57,15 @@ E.g. \code{event_count_col_nm = c("event_1", "event_2")}.
 Each of these columns must have class \code{integer}. All values must be >= 0.
 No missing values are allowed.}
 
-\item{event_time_amount_col_nms}{\verb{[character]} (no default)
+\item{at_risk_time_col_nm}{\verb{[character]} (no default)
 
-Identifies the column (one or more) containing counts of events.
-E.g. \code{event_count_col_nm = c("event_1_count", "event_2_count")}.
+Identifies the column containing time-at-risk values. That is, time at risk
+of all the possible events (which should exclude e.g. those who already have
+cancer, if cancer is one of the events).
+E.g. \code{at_risk_time_col_nm = "pyrs"}.
 
-See section \strong{Under the hood} for more information about the purpose of
-this argument.
-
-There must be as many elements in
-\code{event_count_col_nms} as in \code{event_time_amount_col_nms}. These two arguments
-are assumed to relate to each other elementwise, e.g. the first elements
-of both are assumed to belong to the same event.
-
-Each of these columns must be either \code{integer} or \code{numeric}. No missing
-values are allowed. All values must be >= 0.}
-
-\item{population_time_amount_col_nm}{\verb{[character]} (no default)
-
-Identifies the column containing time amounts for the (whole, general)
-population regardless of what events the subjects in the population may
-have encountered. E.g. general population person-years from the national
-statistics office. E.g. \code{population_time_amount_col_nm = "pop_pyrs"}.
-
-This column must be either \code{integer} or \code{numeric}. No missing \strong{NOR ZERO}
-values are allowed.}
+This column must be either \code{integer} or \code{numeric}. All values must be >=
+and not missing.}
 }
 \description{
 Tools to estimate absolute risk curves. Absolute risk is also known as
@@ -102,17 +85,13 @@ ISBN-13 978-0471155003.
 The estimation of absolute risk curves is performed via the following steps
 on working dataset \code{dt} created based on \code{x}:
 \enumerate{
-\item At-risk time amounts are computed by subtracting each event time amount
-from \code{dt[[population_time_amount_col_nm]]}. This is the total amount of
-time in each stratum that the population spent before/without having any
-of the events in question. E.g. time the population spent alive and
-cancer-free. This is collected into column \code{dt[["at_risk_time_amount"]]}.
 \item The hazard rate of each event is estimated via
-\code{dt[[event_count_col_nms[i]]] / dt[["at_risk_time_amount"]]} for
+\code{dt[[event_count_col_nms[i]]] / dt[[at_risk_time_col_nm]]} for
 each \verb{i in seq_along(event_count_col_nms)}. An "overall hazard rate"
 is computed as the sum of all the different hazard rates.
 \item The overall survival function is estimated via
-\code{exp(-cumsum(dt[["overall_hazard_rate"]]))}. This is performed separately
+\code{exp(-cumsum(dt[["overall_hazard_rate"]] * dt[["interval_width"]]))}.
+This is performed separately
 for each stratum identified by \code{stratum_col_nms}, if any exist.
 The "overall event probability" for each interval, conditional on survival
 up to the start of the interval, is computed.
@@ -127,36 +106,57 @@ survival (survival probability up to the start of the interval),
 \examples{
 dt <- data.table::data.table(
   age_group_start = 0:100,
-  age_group_stop = c(1:100, 120L),
-  cancer_count = 1:101,
-  death_count = (1:101 + 10L),
-  cancer_pyrs = 101:1,
-  death_pyrs = rep(0.0, 101),
-  pop_pyrs = rep(1e4, 101)
+  age_group_stop  = c(1:100, 120L),
+  cancer_count    = 1:101,
+  death_count     = (1:101 + 10L),
+  pyrs            = rep(1e4, 101)
 )
 dt <- rbind(data.table::copy(dt)[, "sex" := 1L],
             data.table::copy(dt)[, "sex" := 2L])
 dt[dt[["sex"]] == 2L, "cancer_count" := c(rep(1:10, each = 10L), 5L)]
-dt[dt[["sex"]] == 2L, "cancer_pyrs"  := c(rep(1.0, 100L), 5L)]
 ardt <- basicepistats::stat_absolute_risk_ag(
-  x = dt,
-  stratum_col_nms               = "sex",
-  interval_start_col_nm        = "age_group_start",
-  interval_stop_col_nm         = "age_group_stop",
-  event_count_col_nms           = c("cancer_count", "death_count"),
-  event_time_amount_col_nms     = c("cancer_pyrs" , "death_pyrs"),
-  population_time_amount_col_nm = "pop_pyrs"
+  x                     = dt,
+  stratum_col_nms       = "sex",
+  interval_start_col_nm = "age_group_start",
+  interval_stop_col_nm  = "age_group_stop",
+  event_count_col_nms   = c(cancer = "cancer_count", death = "death_count"),
+  at_risk_time_col_nm   = "pyrs"
 )
 
 # overall survival and event-specific absolute risks sum to one!
 stopifnot(all.equal(
-  ardt[["overall_survival"]] + ardt[["event_1_absolute_risk"]] +
-    ardt[["event_2_absolute_risk"]],
+  ardt[["overall_survival"]] + ardt[["cancer_absolute_risk"]] +
+    ardt[["death_absolute_risk"]],
   rep(1.0, nrow(ardt))
 ))
 
-plot(event_1_absolute_risk ~ age_group_stop,
-     data = ardt[ardt[["sex"]] == 1L, ], col = "black", type = "l")
-lines(event_1_absolute_risk ~ age_group_stop,
+plot( cancer_absolute_risk ~ age_group_stop,
+      data = ardt[ardt[["sex"]] == 1L, ], col = "black", type = "l",
+      ylim = c(0, max(ardt[["cancer_absolute_risk"]])))
+lines(cancer_absolute_risk ~ age_group_stop,
       data = ardt[ardt[["sex"]] == 2L, ], col = "red")
+
+plot( death_absolute_risk ~ age_group_stop,
+      data = ardt[ardt[["sex"]] == 1L, ], col = "black", type = "l",
+      ylim = c(0, max(ardt[["death_absolute_risk"]])))
+lines(death_absolute_risk ~ age_group_stop,
+      data = ardt[ardt[["sex"]] == 2L, ], col = "red")
+
+# this example mostly for testing that basicepistats::stat_absolute_risk_ag
+# works as intended. in this example, 5 people all get cancer and none die.
+# one gets cancer in the middle of each interval.
+dt <- data.table::data.table(
+  age_group_start = 0:4 * 20L,
+  age_group_stop  = 1:5 * 20L,
+  cancer_count    = rep(1L, 5L),
+  death_count     = rep(0L, 5L),
+  pyrs            = c(100, 80, 60, 40, 20) - 10
+)
+ardt <- basicepistats::stat_absolute_risk_ag(
+  x                     = dt,
+  interval_start_col_nm = "age_group_start",
+  interval_stop_col_nm  = "age_group_stop",
+  event_count_col_nms   = c(cancer = "cancer_count", death = "death_count"),
+  at_risk_time_col_nm   = "pyrs"
+)
 }
