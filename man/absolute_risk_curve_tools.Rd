@@ -2,10 +2,10 @@
 % Please edit documentation in R/absolute_risk.R
 \name{absolute_risk_curve_tools}
 \alias{absolute_risk_curve_tools}
-\alias{stat_absolute_risk_ag}
+\alias{stat_absolute_risk}
 \title{Absolute Risk Curve}
 \usage{
-stat_absolute_risk_ag(
+stat_absolute_risk(
   x,
   stratum_col_nms = NULL,
   interval_start_col_nm,
@@ -77,7 +77,7 @@ the statistical probability in some population of developing cancer
 \section{Under the hood}{
 
 
-\code{basicepistats::stat_absolute_risk_ag} implements the method described in
+\code{basicepistats::stat_absolute_risk} implements the method described in
 Chiang, Chin Long, 1986,
 Introduction to stochastic processes in biostatistics,
 ISBN-13 978-0471155003.
@@ -114,7 +114,7 @@ dt <- data.table::data.table(
 dt <- rbind(data.table::copy(dt)[, "sex" := 1L],
             data.table::copy(dt)[, "sex" := 2L])
 dt[dt[["sex"]] == 2L, "cancer_count" := c(rep(1:10, each = 10L), 5L)]
-ardt <- basicepistats::stat_absolute_risk_ag(
+ardt <- basicepistats::stat_absolute_risk(
   x                     = dt,
   stratum_col_nms       = "sex",
   interval_start_col_nm = "age_group_start",
@@ -142,7 +142,7 @@ plot( death_absolute_risk ~ age_group_stop,
 lines(death_absolute_risk ~ age_group_stop,
       data = ardt[ardt[["sex"]] == 2L, ], col = "red")
 
-# this example mostly for testing that basicepistats::stat_absolute_risk_ag
+# this example mostly for testing that basicepistats::stat_absolute_risk
 # works as intended. in this example, 5 people all get cancer and none die.
 # one gets cancer in the middle of each interval.
 dt <- data.table::data.table(
@@ -152,7 +152,7 @@ dt <- data.table::data.table(
   death_count     = rep(0L, 5L),
   pyrs            = c(100, 80, 60, 40, 20) - 10
 )
-ardt <- basicepistats::stat_absolute_risk_ag(
+ardt <- basicepistats::stat_absolute_risk(
   x                     = dt,
   interval_start_col_nm = "age_group_start",
   interval_stop_col_nm  = "age_group_stop",

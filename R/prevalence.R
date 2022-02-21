@@ -495,16 +495,12 @@ stat_year_based_prevalence_count__ <- function(
 
 codedoc_stat_year_based_prevalence_count <- function() {
   requireNamespace("codedoc")
-
-  df <- codedoc::extract_keyed_comment_blocks(
-    text_file_paths = "R/prevalence.R"
+  re <- "year_based_prevalence"
+  lines <- c(
+    "@section Under the hood:",
+    codedoc::codedoc_lines(re)
   )
-  df <- df[grepl("year_based_prevalence", df$key), ]
-
-  lines <- unlist(lapply(df[["comment_block"]], function(obj) {
-    c("", obj, "")
-  }))
-  return(c("@section Under the hood:", lines))
+  return(lines)
 }
 
 
