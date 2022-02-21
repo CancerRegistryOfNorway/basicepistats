@@ -74,9 +74,18 @@ stat_absolute_risk <- function(
   interval_start_col_nm,
   interval_stop_col_nm,
   event_count_col_nms,
-  at_risk_time_col_nm
+  at_risk_time_col_nm,
+  assertion_type = "input"
 ) {
   stat_absolute_risk_call <- match.call()
+
+  # @codedoc_comment_block basicepistats::stat_absolute_risk
+  # @param assertion_type `[character]` (default `"input"`)
+  #
+  # See e.g. `[dbc::assert_is_one_of]`.
+  # @codedoc_comment_block basicepistats::stat_absolute_risk
+  dbc::assert_is_assertion_type(assertion_type, assertion_type = "input")
+
   # @codedoc_comment_block basicepistats::stat_absolute_risk
   # @param stratum_col_nms `[NULL, character]` (default `NULL`)
   #
@@ -89,7 +98,8 @@ stat_absolute_risk <- function(
     funs = list(
       dbc::report_is_NULL,
       dbc::report_is_character_nonNA_atom
-    )
+    ),
+    assertion_type = assertion_type
   )
   # @codedoc_comment_block basicepistats::stat_absolute_risk
   # @param interval_start_col_nm `[character]` (no default)
@@ -100,14 +110,16 @@ stat_absolute_risk <- function(
   # This columns must have one of the classes `c("numeric", "integer", "Date")`.
   # No missing values are allowed.
   # @codedoc_comment_block basicepistats::stat_absolute_risk
-  dbc::assert_is_character_nonNA_atom(interval_start_col_nm)
+  dbc::assert_is_character_nonNA_atom(interval_start_col_nm,
+                                      assertion_type = assertion_type)
   dbc::assert_is_one_of(
     x[[interval_start_col_nm]],
     x_nm = paste0("x$", interval_start_col_nm),
     funs = list(
       dbc::report_is_number_nonNA_vector,
       dbc::report_is_Date_nonNA_vector
-    )
+    ),
+    assertion_type = assertion_type
   )
   # @codedoc_comment_block basicepistats::stat_absolute_risk
   # @param interval_stop_col_nm `[character]` (no default)
@@ -119,7 +131,8 @@ stat_absolute_risk <- function(
   # No missing values are allowed. Every stop value must be larger than the
   # corresponding start value.
   # @codedoc_comment_block basicepistats::stat_absolute_risk
-  dbc::assert_is_character_nonNA_atom(interval_stop_col_nm)
+  dbc::assert_is_character_nonNA_atom(interval_stop_col_nm,
+                                      assertion_type = assertion_type)
   dbc::report_to_assertion(
     dbc::expressions_to_report(
       list(
@@ -150,9 +163,11 @@ stat_absolute_risk <- function(
         NA_character_
       ),
       call = stat_absolute_risk_call
-    )
+    ),
+    assertion_type = assertion_type
   )
-  dbc::assert_is_nonNA(x[[interval_stop_col_nm]])
+  dbc::assert_is_nonNA(x[[interval_stop_col_nm]],
+                       assertion_type = assertion_type)
   # @codedoc_comment_block basicepistats::stat_absolute_risk
   # @param event_count_col_nms `[character]` (no default)
   #
@@ -162,20 +177,24 @@ stat_absolute_risk <- function(
   # Each of these columns must have class `integer`. All values must be >= 0.
   # No missing values are allowed.
   # @codedoc_comment_block basicepistats::stat_absolute_risk
-  dbc::assert_is_character_nonNA_vector(event_count_col_nms)
-  dbc::assert_is_uniquely_named(event_count_col_nms)
+  dbc::assert_is_character_nonNA_vector(event_count_col_nms,
+                                        assertion_type = assertion_type)
+  dbc::assert_is_uniquely_named(event_count_col_nms,
+                                assertion_type = assertion_type)
   lapply(event_count_col_nms, function(col_nm) {
     dbc::assert_is_integer_nonNA_gtezero_vector(
       x[[col_nm]],
       x_nm = paste0("x$", col_nm),
-      call = stat_absolute_risk_call
+      call = stat_absolute_risk_call,
+      assertion_type = assertion_type
     )
   })
   dbc::report_to_assertion(
     dbc::expressions_to_report(
       list(quote(length(event_count_col_nms) >= 1L)),
       call = stat_absolute_risk_call
-    )
+    ),
+    assertion_type = assertion_type
   )
   # @codedoc_comment_block basicepistats::stat_absolute_risk
   # @param at_risk_time_col_nm `[character]` (no default)
@@ -188,8 +207,11 @@ stat_absolute_risk <- function(
   # This column must be either `integer` or `numeric`. All values must be >=
   # and not missing.
   # @codedoc_comment_block basicepistats::stat_absolute_risk
-  dbc::assert_is_character_nonNA_atom(at_risk_time_col_nm)
-  dbc::assert_is_number_nonNA_gtezero_vector(x[[at_risk_time_col_nm]])
+  dbc::assert_is_character_nonNA_atom(at_risk_time_col_nm,
+                                      assertion_type = assertion_type)
+  dbc::assert_is_number_nonNA_gtezero_vector(x[[at_risk_time_col_nm]],
+                                             assertion_type = assertion_type)
+
   # @codedoc_comment_block basicepistats::stat_absolute_risk
   # @param x `[data.table]` (no default)
   #
@@ -260,7 +282,8 @@ stat_absolute_risk <- function(
     col_nm_dt[["identifies_unique"]]
   ]
   dbc::assert_is_data.table_with_required_names(
-    x, required_names = setdiff(col_nm_dt[["x"]], NA_character_)
+    x, required_names = setdiff(col_nm_dt[["x"]], NA_character_),
+    assertion_type = assertion_type
   )
   dbc::report_to_assertion(
     dbc::expressions_to_report(
@@ -268,7 +291,8 @@ stat_absolute_risk <- function(
         !duplicated(x, by = intersect(tmp_col_nm_sets[["unique_id"]], names(x)))
       )),
       call = stat_absolute_risk_call
-    )
+    ),
+    assertion_type = assertion_type
   )
   dt <- local({
     type_set <- c("stratum", "interval", "event_count", "at_risk")

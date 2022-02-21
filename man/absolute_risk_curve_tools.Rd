@@ -11,7 +11,8 @@ stat_absolute_risk(
   interval_start_col_nm,
   interval_stop_col_nm,
   event_count_col_nms,
-  at_risk_time_col_nm
+  at_risk_time_col_nm,
+  assertion_type = "input"
 )
 }
 \arguments{
@@ -66,6 +67,10 @@ E.g. \code{at_risk_time_col_nm = "pyrs"}.
 
 This column must be either \code{integer} or \code{numeric}. All values must be >=
 and not missing.}
+
+\item{assertion_type}{\verb{[character]} (default \code{"input"})
+
+See e.g. \verb{[dbc::assert_is_one_of]}.}
 }
 \description{
 Tools to estimate absolute risk curves. Absolute risk is also known as
