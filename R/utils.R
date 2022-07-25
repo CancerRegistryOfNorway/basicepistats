@@ -90,7 +90,7 @@ enforce_level_space <- function(
   x <- x[
     i = joint_column_level_space,
     on = names(joint_column_level_space)
-    ]
+  ]
   lapply(value_col_nms, function(value_col_nm) {
     is_na <- is.na(x[[value_col_nm]])
     data.table::set(
@@ -233,7 +233,7 @@ handle_by_arg <- function(
       by <- by[
         i = sub_space,
         on = names(sub_space)
-        ]
+      ]
     }
   }
   return(by)
@@ -349,64 +349,56 @@ assert_is_arg_by <- function(
 
 
 call_with_arg_list <- function(
-  fun_nm,
+  fun,
   arg_list = NULL,
-  envir = parent.frame(1L)
+  envir = NULL
 ) {
-  dbc::assert_is_character_nonNA_atom(fun_nm)
-  fun <- tryCatch(
-    eval(substitute(get(fun_nm, mode = "function")),
-         envir = envir),
-    error = function(e) e
+  dbc::assert_is_character_nonNA_atom(
+    fun,
+    assertion_type = "prod_input"
   )
-  if (!is.function(fun)) {
-    fun <- tryCatch(
-      eval(substitute(get(fun_nm, mode = "function")),
-           envir = parent.frame(1L)),
-      error = function(e) e
-    )
-  }
-  if (!is.function(fun)) {
-    fun <- tryCatch(
-      eval(substitute(get(fun_nm, mode = "function")),
-           envir = environment(call_with_arg_list)),
-      error = function(e) e
-    )
-  }
-  if (!is.function(fun)) {
-    stop("internal error: could not retrieve fun named ", deparse(fun_nm))
+  arg_list_expr <- substitute(arg_list)
+  dbc::assert_is_one_of(
+    arg_list,
+    funs = list(dbc::report_is_NULL,
+                dbc::report_is_uniquely_named_list),
+    assertion_type = "prod_input"
+  )
+  dbc::assert_is_one_of(
+    envir,
+    funs = list(dbc::report_is_NULL,
+                dbc::report_is_environment),
+    assertion_type = "prod_input"
+  )
+
+  fun_nm <- fun
+  fun <- tryCatch(eval(parse(text = fun)),
+                  error = function(e) e)
+  if (inherits(fun, "error")) {
+    stop("Internal error: could not find object ", fun)
   }
 
   if (is.null(arg_list)) {
-    arg_list <- mget(names(formals(fun)), envir = envir)
-  }
-  dbc::assert_is_list(arg_list)
-
-  is_unnamed_arg <- names(arg_list) == ""
-  n_unnamed_args <- sum(is_unnamed_arg)
-  if (n_unnamed_args > 0L) {
-    names(arg_list)[is_unnamed_arg] <- paste0(
-      "unnamed_argument_", 1:n_unnamed_args
+    arg_nms <- names(formals(fun))
+    arg_list_expr <- paste0(
+      "list(",
+      paste0(arg_nms, " = ", arg_nms, collapse = ", "),
+      ")"
     )
+    arg_list_expr <- parse(text = arg_list_expr)[[1L]]
   }
 
-  fun_env <- new.env(parent = envir)
-  fun_env[[fun_nm]] <- fun
-  arg_env <- new.env(parent = fun_env)
-  lapply(seq_along(arg_list), function(i) {
-    arg_env[[names(arg_list)[i]]] <- arg_list[[i]]
-  })
+  if (is.null(envir)) {
+    envir <- parent.frame(1L)
+  }
 
-  call_string <- paste0(
-    fun_nm, "(\n",
-    paste0("  ", names(arg_list), " = ", names(arg_list), collapse = ",\n"),
-    "\n)"
+  arg_list_expr_list <- as.list(arg_list_expr)[-1]
+  expr <- do.call(
+    call,
+    c(list(name = fun_nm), arg_list_expr_list),
+    quote = TRUE
   )
-  call_string <- gsub("unnamed_argument_[0-9]+ = ", "", call_string)
-
-  call <- parse(text = call_string)[[1L]]
-  eval_env <- new.env(parent = arg_env)
-  eval(call, envir = eval_env)
+  eval(expr, envir = envir)
 }
 
 
