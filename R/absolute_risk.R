@@ -78,6 +78,7 @@ stat_absolute_risk <- function(
   assertion_type = "input"
 ) {
   stat_absolute_risk_call <- match.call()
+  stat_absolute_risk_env  <- environment()
 
   # @codedoc_comment_block basicepistats::stat_absolute_risk
   # @param assertion_type `[character]` (default `"input"`)
@@ -162,7 +163,8 @@ stat_absolute_risk <- function(
         ),
         NA_character_
       ),
-      call = stat_absolute_risk_call
+      call = stat_absolute_risk_call,
+      env = stat_absolute_risk_env
     ),
     assertion_type = assertion_type
   )
