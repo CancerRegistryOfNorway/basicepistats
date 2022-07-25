@@ -696,8 +696,8 @@ stat_year_based_prevalent_subject_count_ <- function(
   assert_is_arg_subset(subset, nrow(x), assertion_type = assertion_type)
   assert_is_arg_subset_style(subset_style, assertion_type = assertion_type)
 
+  subset <- handle_subset_arg(dataset = x)
   subset <- local({
-    subset <- handle_subset_arg(dataset = x)
     if (is.null(subset)) {
       subset <- rep(TRUE, nrow(x))
     }
