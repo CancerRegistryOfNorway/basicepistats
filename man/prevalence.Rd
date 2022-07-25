@@ -15,7 +15,8 @@ stat_prevalent_record_count(
   subset = NULL,
   subset_style = "zeros",
   observation_time_points,
-  entry_time_col_nm
+  entry_time_col_nm,
+  assertion_type = "input"
 )
 
 stat_prevalent_subject_count_(
@@ -27,7 +28,8 @@ stat_prevalent_subject_count_(
   subset = NULL,
   subset_style = "zeros",
   observation_time_points,
-  entry_time_col_nm
+  entry_time_col_nm,
+  assertion_type = "input"
 )
 
 stat_prevalent_subject_count(
@@ -39,7 +41,8 @@ stat_prevalent_subject_count(
   subset = NULL,
   subset_style = "zeros",
   observation_time_points,
-  entry_time_col_nm
+  entry_time_col_nm,
+  assertion_type = "input"
 )
 }
 \arguments{
@@ -105,6 +108,10 @@ time values in fractional years}
 
 name of column in \code{x} along which prevalence snapshots are taken; snapshots
 are supplied via \code{observation_time_points}}
+
+\item{assertion_type}{\verb{[character]}
+
+Passed to one or more assertions. See e.g. \verb{[dbc::report_to_assertion]}.}
 
 \item{subject_id_col_nm}{\verb{[character]} (mandatory, no default)
 

@@ -8,16 +8,29 @@
 \alias{stat_unique_count_}
 \title{Counts}
 \usage{
-stat_count(x, by = NULL, subset = NULL, subset_style = c("zeros", "drop")[1])
+stat_count(
+  x,
+  by = NULL,
+  subset = NULL,
+  subset_style = c("zeros", "drop")[1],
+  assertion_type = "user_input"
+)
 
-stat_count_(x, by = NULL, subset = NULL, subset_style = c("zeros", "drop")[1])
+stat_count_(
+  x,
+  by = NULL,
+  subset = NULL,
+  subset_style = c("zeros", "drop")[1],
+  assertion_type = "prod_input"
+)
 
 stat_unique_count(
   x,
   unique_by,
   by = NULL,
   subset = NULL,
-  subset_style = c("zeros", "drop")[1]
+  subset_style = c("zeros", "drop")[1],
+  assertion_type = "input"
 )
 
 stat_unique_count_(
@@ -25,7 +38,8 @@ stat_unique_count_(
   unique_by,
   by = NULL,
   subset = NULL,
-  subset_style = c("zeros", "drop")[1]
+  subset_style = c("zeros", "drop")[1],
+  assertion_type = "prod_input"
 )
 }
 \arguments{
@@ -65,6 +79,10 @@ will have zero counts
 \item \code{"drop"}: output will not have strata that are not in the subset
 (zero counts are impossible)
 }}
+
+\item{assertion_type}{\verb{[character]}
+
+Passed to one or more assertions. See e.g. \verb{[dbc::report_to_assertion]}.}
 
 \item{unique_by}{\verb{[character]} (mandatory, no default)
 

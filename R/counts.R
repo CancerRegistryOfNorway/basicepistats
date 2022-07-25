@@ -12,6 +12,7 @@
 #' @template arg_subset
 #' @template arg_subset_style
 #' @template arg_by
+#' @template arg_assertion_type
 #' @examples
 #' library("data.table")
 #' sls <- data.table::CJ(sex = 1:2, area_2 = 1:5)
@@ -52,19 +53,21 @@ stat_count <- function(
   x,
   by = NULL,
   subset = NULL,
-  subset_style = c("zeros", "drop")[1]
+  subset_style = c("zeros", "drop")[1],
+  assertion_type = "user_input"
 ) {
-  dbc::assert_user_input_is_data_table(x)
-  assert_user_input_by(by)
-  assert_user_input_subset(subset, nrow(x))
-  assert_user_input_subset_style(subset_style)
+  dbc::assert_is_data_table(x, assertion_type = assertion_type)
+  assert_is_arg_by(by, assertion_type = assertion_type)
+  assert_is_arg_subset(subset, nrow(x), assertion_type = assertion_type)
+  assert_is_arg_subset_style(subset_style, assertion_type = assertion_type)
 
   stat_expr_(
     x = x,
     expr = quote(list(N = .N)),
     by = by,
     subset = subset,
-    subset_style = subset_style
+    subset_style = subset_style,
+    assertion_type = "prod_input"
   )
 }
 
@@ -79,19 +82,22 @@ stat_count_ <- function(
   x,
   by = NULL,
   subset = NULL,
-  subset_style = c("zeros", "drop")[1]
+  subset_style = c("zeros", "drop")[1],
+  assertion_type = "prod_input"
 ) {
-  dbc::assert_prod_input_is_data_table(x)
-  assert_prod_input_by(by)
-  assert_prod_input_subset(subset, nrow(x))
-  assert_prod_input_subset_style(subset_style)
+  dbc::assert_is_data_table(x, assertion_type = assertion_type)
+
+  assert_is_arg_by(by, assertion_type = assertion_type)
+  assert_is_arg_subset(subset, nrow(x), assertion_type = assertion_type)
+  assert_is_arg_subset_style(subset_style, assertion_type = assertion_type)
 
   stat_expr_(
     x = x,
     expr = quote(list(N = .N)),
     by = by,
     subset = subset,
-    subset_style = subset_style
+    subset_style = subset_style,
+    assertion_type = "prod_input"
   )
 }
 
@@ -112,22 +118,28 @@ stat_unique_count <- function(
   unique_by,
   by = NULL,
   subset = NULL,
-  subset_style = c("zeros", "drop")[1]
+  subset_style = c("zeros", "drop")[1],
+  assertion_type = "input"
 ) {
-  assert_user_input_by(by)
-  assert_user_input_subset(subset, nrow(x))
-  assert_user_input_subset_style(subset_style)
-  dbc::assert_user_input_is_character_nonNA_vector(unique_by)
-  dbc::assert_user_input_is_data_table_with_required_names(
+  assert_is_arg_by(by, assertion_type = assertion_type)
+  assert_is_arg_subset(subset, nrow(x), assertion_type = assertion_type)
+  assert_is_arg_subset_style(subset_style, assertion_type = assertion_type)
+  dbc::assert_is_character_nonNA_vector(
+    unique_by,
+    assertion_type = assertion_type
+  )
+  dbc::assert_is_data_table_with_required_names(
     x,
-    required_names = unique_by
+    required_names = unique_by,
+    assertion_type = assertion_type
   )
   stat_unique_count_(
     x = x,
     unique_by = unique_by,
     by = by,
     subset = subset,
-    subset_style = subset_style
+    subset_style = subset_style,
+    assertion_type = "prod_input"
   )
 }
 
@@ -146,22 +158,27 @@ stat_unique_count_ <- function(
   unique_by,
   by = NULL,
   subset = NULL,
-  subset_style = c("zeros", "drop")[1]
+  subset_style = c("zeros", "drop")[1],
+  assertion_type = "prod_input"
 ) {
-  assert_prod_input_by(by)
-  assert_prod_input_subset(subset, nrow(x))
-  assert_prod_input_subset_style(subset_style)
-  dbc::assert_prod_input_is_character_nonNA_vector(unique_by)
-  dbc::assert_prod_input_is_data_table_with_required_names(
+  assert_is_arg_by(by, assertion_type = assertion_type)
+  assert_is_arg_subset(subset, nrow(x), assertion_type = assertion_type)
+  assert_is_arg_subset_style(subset_style, assertion_type = assertion_type)
+  dbc::assert_is_character_nonNA_vector(
+    unique_by, assertion_type = assertion_type
+  )
+  dbc::assert_is_data_table_with_required_names(
     x,
-    required_names = unique_by
+    required_names = unique_by,
+    assertion_type = assertion_type
   )
   stat_expr_(
     x = x,
     expr = substitute(list(N = uniqueN(.SD, by = UB)), list(UB = unique_by)),
     by = by,
     subset = subset,
-    subset_style = subset_style
+    subset_style = subset_style,
+    assertion_type = "prod_input"
   )
 }
 
@@ -171,13 +188,15 @@ stat_expr_ <- function(
   expr = quote(list(N = .N)),
   by = NULL,
   subset = NULL,
-  subset_style = "zeros"
+  subset_style = "zeros",
+  assertion_type = "prod_input"
 ) {
-  dbc::assert_prod_input_is_data_table(x)
-  dbc::assert_prod_input_has_one_of_classes(expr, classes = c("call", "name"))
-  assert_prod_input_by(by)
-  assert_prod_input_subset(subset, nrow(x))
-  assert_prod_input_subset_style(subset_style)
+  dbc::assert_is_data_table(x, assertion_type = assertion_type)
+  dbc::assert_has_one_of_classes(expr, classes = c("call", "name"),
+                                 assertion_type = assertion_type)
+  assert_is_arg_by(by, assertion_type = assertion_type)
+  assert_is_arg_subset(subset, nrow(x), assertion_type = assertion_type)
+  assert_is_arg_subset_style(subset_style, assertion_type = assertion_type)
   subset <- handle_subset_arg(dataset = x)
   by <- handle_by_arg(
     by = by,

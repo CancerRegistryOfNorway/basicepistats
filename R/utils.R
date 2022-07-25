@@ -23,10 +23,10 @@
 level_space_list_to_level_space_data_table <- function(
   x
 ) {
-  dbc::assert_prod_input_is_uniquely_named_list(x)
+  dbc::assert_is_uniquely_named_list(x)
   this_call <- match.call()
   lapply(seq_along(x), function(i) {
-    dbc::assert_prod_input_is_one_of(
+    dbc::assert_is_one_of(
       x = x[[i]],
       x_nm = paste0("x[[", i, "]]"),
       call = this_call,
@@ -75,13 +75,13 @@ enforce_level_space <- function(
   fill = 0L,
   joint_column_level_space
 ) {
-  dbc::assert_prod_input_is_character_nonNA_vector(value_col_nms)
-  dbc::assert_prod_input_is_data_table_with_required_names(
+  dbc::assert_is_character_nonNA_vector(value_col_nms)
+  dbc::assert_is_data_table_with_required_names(
     x,
     required_names = c(value_col_nms, names(joint_column_level_space))
   )
-  dbc::assert_prod_input_is_number_nonNA_vector(fill)
-  dbc::assert_prod_input_is_data_table(joint_column_level_space)
+  dbc::assert_is_number_nonNA_vector(fill)
+  dbc::assert_is_data_table(joint_column_level_space)
 
   if (length(fill) == 1L) {
     fill <- rep(fill, length(value_col_nms))
@@ -117,14 +117,14 @@ handle_subset_arg <- function(
   enclosing_env = parent.frame(2L),
   function_call = sys.call(1L)
 ) {
-  dbc::assert_prod_input_is_character_nonNA_atom(subset_arg_nm)
-  dbc::assert_prod_input_has_one_of_classes(
+  dbc::assert_is_character_nonNA_atom(subset_arg_nm)
+  dbc::assert_has_one_of_classes(
     dataset, classes = c("data.frame", "environment")
   )
-  dbc::assert_prod_input_has_class(
+  dbc::assert_has_class(
     function_env, required_class = "environment"
   )
-  dbc::assert_prod_input_has_class(
+  dbc::assert_has_class(
     enclosing_env, required_class = "environment"
   )
   stopifnot(
@@ -192,11 +192,17 @@ handle_subset_arg <- function(
 
 
 
-handle_by_arg <- function(by, dataset, subset, subset_style) {
+handle_by_arg <- function(
+  by,
+  dataset,
+  subset,
+  subset_style,
+  assertion_type = "prod_input"
+) {
   # returns a data.table usually but NULL if by = NULL.
-  assert_prod_input_by(by)
+  assert_is_arg_by(by, assertion_type = assertion_type)
   if (data.table::is.data.table(by)) {
-    dbc::assert_prod_input_is_data_table_with_required_names(
+    dbc::assert_is_data_table_with_required_names(
       x = dataset, required_names = names(by)
     )
   } else if (inherits(by, "list")) {
@@ -236,7 +242,11 @@ handle_by_arg <- function(by, dataset, subset, subset_style) {
 subset_style_options <- function() {
   c("zeros", "drop")
 }
-report_user_input_subset_style <- function(x, x_nm = NULL, call = NULL) {
+report_is_arg_subset_style <- function(
+  x,
+  x_nm = NULL,
+  call = NULL
+) {
   x_nm <- dbc::handle_arg_x_nm(x_nm)
   call <- dbc::handle_arg_call(call)
   rbind(
@@ -248,26 +258,25 @@ report_user_input_subset_style <- function(x, x_nm = NULL, call = NULL) {
   )
 }
 
-assert_user_input_subset_style <- function(x, x_nm = NULL, call = NULL) {
+assert_is_arg_subset_style <- function(
+  x,
+  x_nm = NULL,
+  call = NULL,
+  assertion_type = "input"
+) {
   x_nm <- dbc::handle_arg_x_nm(x_nm)
   call <- dbc::handle_arg_call(call)
   dbc::report_to_assertion(
-    report_user_input_subset_style(x, x_nm = x_nm, call = call),
-    assertion_type = "user_input"
+    report_is_arg_subset_style(x, x_nm = x_nm, call = call),
+    assertion_type = assertion_type
   )
 }
 
-assert_prod_input_subset_style <- function(x, x_nm = NULL, call = NULL) {
-  x_nm <- dbc::handle_arg_x_nm(x_nm)
-  call <- dbc::handle_arg_call(call)
-  dbc::report_to_assertion(
-    report_user_input_subset_style(x, x_nm = x_nm, call = call),
-    assertion_type = "prod_input"
-  )
-}
-
-report_user_input_subset <- function(
-  x, n_dataset_rows, x_nm = NULL, call = NULL
+report_is_arg_subset <- function(
+  x,
+  n_dataset_rows,
+  x_nm = NULL,
+  call = NULL
 ) {
   x_nm <- dbc::handle_arg_x_nm(x_nm)
   call <- dbc::handle_arg_call(call)
@@ -298,54 +307,39 @@ report_user_input_subset <- function(
   return(report_df)
 }
 
-assert_user_input_subset <- function(
-  x, n_dataset_rows, x_nm = NULL, call = NULL
+assert_is_arg_subset <- function(
+  x,
+  n_dataset_rows,
+  x_nm = NULL,
+  call = NULL,
+  assertion_type = "input"
 ) {
   x_nm <- dbc::handle_arg_x_nm(x_nm)
   call <- dbc::handle_arg_call(call)
   dbc::report_to_assertion(
-    report_user_input_subset(x, n_dataset_rows, x_nm = x_nm, call = call),
-    assertion_type = "user_input"
+    report_is_arg_subset(x, n_dataset_rows, x_nm = x_nm, call = call),
+    assertion_type = assertion_type
   )
 }
 
-assert_prod_input_subset <- function(x, n_dataset_rows, x_nm = NULL, call = NULL
+
+assert_is_arg_by <- function(
+  x,
+  x_nm = NULL,
+  call = NULL,
+  assertion_type = "input"
 ) {
   x_nm <- dbc::handle_arg_x_nm(x_nm)
   call <- dbc::handle_arg_call(call)
-  dbc::report_to_assertion(
-    report_user_input_subset(x, n_dataset_rows, x_nm = x_nm, call = call),
-    assertion_type = "prod_input"
-  )
-}
-
-assert_prod_input_by <- function(x, x_nm = NULL, call = NULL) {
-  x_nm <- dbc::handle_arg_x_nm(x_nm)
-  call <- dbc::handle_arg_call(call)
-  dbc::assert_prod_input_is_one_of(
+  dbc::assert_is_one_of(
     x,
     x_nm = x_nm,
     call = call,
     funs = c(dbc::report_is_data_table,
              dbc::report_is_character_nonNA_vector,
              dbc::report_is_list,
-             dbc::report_is_NULL)
-  )
-}
-
-assert_user_input_by <- function(
-  x, x_nm = NULL, call = NULL
-) {
-  x_nm <- dbc::handle_arg_x_nm(x_nm)
-  call <- dbc::handle_arg_call(call)
-  dbc::assert_user_input_is_one_of(
-    x,
-    x_nm = x_nm,
-    call = call,
-    funs = c(dbc::report_is_data_table,
-             dbc::report_is_character_nonNA_vector,
-             dbc::report_is_list,
-             dbc::report_is_NULL)
+             dbc::report_is_NULL),
+    assertion_type = assertion_type
   )
 }
 
@@ -359,7 +353,7 @@ call_with_arg_list <- function(
   arg_list = NULL,
   envir = parent.frame(1L)
 ) {
-  dbc::assert_prod_input_is_character_nonNA_atom(fun_nm)
+  dbc::assert_is_character_nonNA_atom(fun_nm)
   fun <- tryCatch(
     eval(substitute(get(fun_nm, mode = "function")),
          envir = envir),
@@ -386,7 +380,7 @@ call_with_arg_list <- function(
   if (is.null(arg_list)) {
     arg_list <- mget(names(formals(fun)), envir = envir)
   }
-  dbc::assert_prod_input_is_list(arg_list)
+  dbc::assert_is_list(arg_list)
 
   is_unnamed_arg <- names(arg_list) == ""
   n_unnamed_args <- sum(is_unnamed_arg)

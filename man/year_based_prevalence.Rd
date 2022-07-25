@@ -15,7 +15,8 @@ stat_year_based_prevalent_record_count(
   maximum_follow_up_years = c(1L, 3L, 5L, 1000L),
   by = NULL,
   subset = NULL,
-  subset_style = "zeros"
+  subset_style = "zeros",
+  assertion_type = "input"
 )
 
 stat_year_based_prevalent_subject_count(
@@ -27,7 +28,8 @@ stat_year_based_prevalent_subject_count(
   maximum_follow_up_years = c(1L, 3L, 5L, 1000L),
   by = NULL,
   subset = NULL,
-  subset_style = "zeros"
+  subset_style = "zeros",
+  assertion_type = "input"
 )
 
 stat_year_based_prevalent_subject_count_(
@@ -39,7 +41,8 @@ stat_year_based_prevalent_subject_count_(
   maximum_follow_up_years = c(1L, 3L, 5L, 1000L),
   by = NULL,
   subset = NULL,
-  subset_style = "zeros"
+  subset_style = "zeros",
+  assertion_type = "input"
 )
 }
 \arguments{
@@ -107,6 +110,10 @@ will have zero counts
 \item \code{"drop"}: output will not have strata that are not in the subset
 (zero counts are impossible)
 }}
+
+\item{assertion_type}{\verb{[character]}
+
+Passed to one or more assertions. See e.g. \verb{[dbc::report_to_assertion]}.}
 
 \item{subject_id_col_nm}{\verb{[character]} (mandatory, no default)
 

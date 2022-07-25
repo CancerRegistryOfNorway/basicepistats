@@ -28,6 +28,7 @@
 #' all subjects
 #' @template arg_subset
 #' @template arg_subset_style
+#' @template arg_assertion_type
 #' @param observation_time_points `[vector]` (mandatory, no default)
 #'
 #' a vector of non-NA values of the same class as `x[[entry_time_col_nm]]`;
@@ -102,7 +103,8 @@ stat_prevalent_record_count <- function(
   subset = NULL,
   subset_style = "zeros",
   observation_time_points,
-  entry_time_col_nm
+  entry_time_col_nm,
+  assertion_type = "input"
 ) {
   do.call(stat_prevalence_count, mget(names(formals(stat_prevalence_count))))
 }
@@ -116,18 +118,24 @@ stat_prevalence_count <- function(
   subset = NULL,
   subset_style = "zeros",
   observation_time_points,
-  entry_time_col_nm
+  entry_time_col_nm,
+  assertion_type = "input"
 ) {
   # assertions -----------------------------------------------------------------
-  dbc::assert_prod_input_is_character_nonNA_atom(follow_up_time_col_nm)
-  dbc::assert_prod_input_is_number_nonNA_vector(follow_up_time_window_widths)
-  dbc::assert_prod_input_is_character_nonNA_atom(entry_time_col_nm)
-  dbc::assert_prod_input_is_nonNA(observation_time_points)
-  dbc::assert_prod_input_is_vector(observation_time_points)
+  dbc::assert_is_character_nonNA_atom(follow_up_time_col_nm,
+                                      assertion_type = assertion_type)
+  dbc::assert_is_number_nonNA_vector(follow_up_time_window_widths,
+                                     assertion_type = assertion_type)
+  dbc::assert_is_character_nonNA_atom(entry_time_col_nm,
+                                      assertion_type = assertion_type)
+  dbc::assert_is_nonNA(observation_time_points, assertion_type = assertion_type)
+  dbc::assert_is_vector(observation_time_points,
+                        assertion_type = assertion_type)
   time_scale_names <- c(follow_up_time_col_nm, entry_time_col_nm)
-  dbc::assert_prod_input_is_data_table_with_required_names(
+  dbc::assert_is_data_table_with_required_names(
     x,
-    required_names = time_scale_names
+    required_names = time_scale_names,
+    assertion_type = assertion_type
   )
 
   # handle by & subset ---------------------------------------------------------
@@ -264,12 +272,15 @@ stat_prevalent_subject_count_ <- function(
   subset = NULL,
   subset_style = "zeros",
   observation_time_points,
-  entry_time_col_nm
+  entry_time_col_nm,
+  assertion_type = "input"
 ) {
-  dbc::assert_prod_input_is_character_nonNA_atom(subject_id_col_nm)
-  dbc::assert_prod_input_is_data_table_with_required_names(
+  dbc::assert_is_character_nonNA_atom(subject_id_col_nm,
+                                      assertion_type = assertion_type)
+  dbc::assert_is_data_table_with_required_names(
     x,
-    required_names = subject_id_col_nm
+    required_names = subject_id_col_nm,
+    assertion_type = assertion_type
   )
   select <- !duplicated(x, by = subject_id_col_nm)
   if (is.logical(subset)) {
@@ -300,21 +311,27 @@ stat_prevalent_subject_count <- function(
   subset = NULL,
   subset_style = "zeros",
   observation_time_points,
-  entry_time_col_nm
+  entry_time_col_nm,
+  assertion_type = "input"
 ) {
-  dbc::assert_user_input_is_data.table(x)
-  dbc::assert_user_input_is_character_nonNA_atom(follow_up_time_col_nm)
-  dbc::assert_user_input_is_number_nonNA_vector(follow_up_time_window_widths)
-  dbc::assert_user_input_is_character_nonNA_atom(subject_id_col_nm)
-  dbc::assert_user_input_is_character_nonNA_atom(entry_time_col_nm)
-  dbc::assert_user_input_is_data.table_with_required_names(
+  dbc::assert_is_data.table(x, assertion_type = assertion_type)
+  dbc::assert_is_character_nonNA_atom(follow_up_time_col_nm,
+                                      assertion_type = assertion_type)
+  dbc::assert_is_number_nonNA_vector(follow_up_time_window_widths,
+                                     assertion_type = assertion_type)
+  dbc::assert_is_character_nonNA_atom(subject_id_col_nm,
+                                      assertion_type = assertion_type)
+  dbc::assert_is_character_nonNA_atom(entry_time_col_nm,
+                                      assertion_type = assertion_type)
+  dbc::assert_is_data.table_with_required_names(
     x,
     required_names = c(follow_up_time_col_nm, subject_id_col_nm,
-                       entry_time_col_nm)
+                       entry_time_col_nm),
+    assertion_type = assertion_type
   )
-  assert_user_input_by(by)
-  assert_user_input_subset(subset, nrow(x))
-  assert_user_input_subset_style(subset_style)
+  assert_is_arg_by(by, assertion_type = assertion_type)
+  assert_is_arg_subset(subset, nrow(x), assertion_type = assertion_type)
+  assert_is_arg_subset_style(subset_style, assertion_type = assertion_type)
 
   call_with_arg_list("stat_prevalent_subject_count_")
 }
@@ -330,7 +347,8 @@ stat_year_based_prevalence_count__ <- function(
   by = NULL,
   subset = NULL,
   subset_style = "zeros",
-  verbose = FALSE
+  verbose = FALSE,
+  assertion_type = "prod_input"
 ) {
 
   # @codedoc_comment_block stat_year_based_prevalence_count__
@@ -341,14 +359,19 @@ stat_year_based_prevalence_count__ <- function(
   # assertions -----------------------------------------------------------------
   whole_run_start_time <- proc.time()
   assertion_start_time <- proc.time()
-  dbc::assert_prod_input_is_character_nonNA_atom(entry_year_col_nm)
-  dbc::assert_prod_input_is_character_nonNA_atom(exit_year_col_nm)
-  dbc::assert_prod_input_is_integer_nonNA_vector(maximum_follow_up_years)
-  dbc::assert_prod_input_is_integer_nonNA_vector(observation_years)
+  dbc::assert_is_character_nonNA_atom(entry_year_col_nm,
+                                      assertion_type = assertion_type)
+  dbc::assert_is_character_nonNA_atom(exit_year_col_nm,
+                                      assertion_type = assertion_type)
+  dbc::assert_is_integer_nonNA_vector(maximum_follow_up_years,
+                                      assertion_type = assertion_type)
+  dbc::assert_is_integer_nonNA_vector(observation_years,
+                                      assertion_type = assertion_type)
   time_scale_names <- c(entry_year_col_nm, exit_year_col_nm)
-  dbc::assert_prod_input_is_data_table_with_required_names(
+  dbc::assert_is_data_table_with_required_names(
     x,
-    required_names = time_scale_names
+    required_names = time_scale_names,
+    assertion_type = assertion_type
   )
   if (verbose) {
     message("* basicepistats:::stat_year_based_prevalence_count__: ",
@@ -540,6 +563,7 @@ codedoc_stat_year_based_prevalence_count <- function() {
 #' and certainly not 2011); see also **Details**
 #' @template arg_subset
 #' @template arg_subset_style
+#' @template arg_assertion_type
 #' @details
 #'
 #' The following logic determines whether a record is prevalent at a specific
@@ -592,7 +616,8 @@ stat_year_based_prevalent_record_count <- function(
   maximum_follow_up_years = c(1L, 3L, 5L, 1e3L),
   by = NULL,
   subset = NULL,
-  subset_style = "zeros"
+  subset_style = "zeros",
+  assertion_type = "input"
 ) {
   verbose <- FALSE
   call_with_arg_list("stat_year_based_prevalence_count__")
@@ -616,19 +641,24 @@ stat_year_based_prevalent_subject_count <- function(
   maximum_follow_up_years = c(1L, 3L, 5L, 1e3L),
   by = NULL,
   subset = NULL,
-  subset_style = "zeros"
+  subset_style = "zeros",
+  assertion_type = "input"
 ) {
-  dbc::assert_user_input_is_data.table(x)
-  dbc::assert_user_input_is_character_nonNA_atom(subject_id_col_nm)
-  dbc::assert_user_input_is_data.table_with_required_names(
+  dbc::assert_is_data.table(x)
+  dbc::assert_is_character_nonNA_atom(subject_id_col_nm,
+                                      assertion_type = assertion_type)
+  dbc::assert_is_data.table_with_required_names(
     x,
-    required_names = c(subject_id_col_nm, entry_year_col_nm, exit_year_col_nm)
+    required_names = c(subject_id_col_nm, entry_year_col_nm, exit_year_col_nm),
+    assertion_type = assertion_type
   )
-  dbc::assert_user_input_is_integer_nonNA_vector(observation_years)
-  dbc::assert_user_input_is_integer_nonNA_gtzero_vector(maximum_follow_up_years)
-  assert_user_input_by(by)
-  assert_user_input_subset(subset, nrow(x))
-  assert_user_input_subset_style(subset_style)
+  dbc::assert_is_integer_nonNA_vector(observation_years,
+                                      assertion_type = assertion_type)
+  dbc::assert_is_integer_nonNA_gtzero_vector(maximum_follow_up_years,
+                                             assertion_type = assertion_type)
+  assert_is_arg_by(by, assertion_type = assertion_type)
+  assert_is_arg_subset(subset, nrow(x), assertion_type = assertion_type)
+  assert_is_arg_subset_style(subset_style, assertion_type = assertion_type)
 
   call_with_arg_list("stat_year_based_prevalent_subject_count_")
 }
@@ -652,16 +682,19 @@ stat_year_based_prevalent_subject_count_ <- function(
   maximum_follow_up_years = c(1L, 3L, 5L, 1e3L),
   by = NULL,
   subset = NULL,
-  subset_style = "zeros"
+  subset_style = "zeros",
+  assertion_type = "input"
 ) {
-  dbc::assert_prod_input_is_character_nonNA_atom(subject_id_col_nm)
-  dbc::assert_prod_input_is_data_table_with_required_names(
+  dbc::assert_is_character_nonNA_atom(subject_id_col_nm,
+                                      assertion_type = assertion_type)
+  dbc::assert_is_data_table_with_required_names(
     x,
-    required_names = c(entry_year_col_nm, exit_year_col_nm, subject_id_col_nm)
+    required_names = c(entry_year_col_nm, exit_year_col_nm, subject_id_col_nm),
+    assertion_type = assertion_type
   )
-  assert_prod_input_by(by)
-  assert_prod_input_subset(subset, nrow(x))
-  assert_prod_input_subset_style(subset_style)
+  assert_is_arg_by(by, assertion_type = assertion_type)
+  assert_is_arg_subset(subset, nrow(x), assertion_type = assertion_type)
+  assert_is_arg_subset_style(subset_style, assertion_type = assertion_type)
 
   subset <- local({
     subset <- handle_subset_arg(dataset = x)
