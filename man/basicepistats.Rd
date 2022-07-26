@@ -10,6 +10,16 @@ and other routine epidemiological statistics.
 }
 \section{News}{
 
+\subsection{News for version 0.2.1}{
+\subsection{Object basicepistats::stat_expr_ news:}{
+
+\code{basicepistats::stat_expr_} fix: refer to \code{uniqueN} with
+\code{data.table::uniqueN}. Now \code{data.table} need not be loaded with
+\code{library(data.table)}.
+}
+
+}
+
 \subsection{News for version 0.2.0}{
 \subsection{Object basicepistats::stat_absolute_risk news:}{
 

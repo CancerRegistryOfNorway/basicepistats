@@ -219,6 +219,12 @@ stat_expr_ <- function(
   # `assertion_type`.
   # @codedoc_comment_block news("basicepistats::stat_expr_", "2022-07-26", "0.2.0")
 
+  # @codedoc_comment_block news("basicepistats::stat_expr_", "2022-07-26", "0.2.1")
+  # `basicepistats::stat_expr_` fix: refer to `uniqueN` with
+  # `data.table::uniqueN`. Now `data.table` need not be loaded with
+  # `library(data.table)`.
+  # @codedoc_comment_block news("basicepistats::stat_expr_", "2022-07-26", "0.2.1")
+
   dbc::assert_is_data_table(x, assertion_type = assertion_type)
   dbc::assert_has_one_of_classes(expr, classes = c("call", "name"),
                                  assertion_type = assertion_type)
