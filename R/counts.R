@@ -194,7 +194,10 @@ stat_unique_count_ <- function(
   )
   stat_expr_(
     x = x,
-    expr = substitute(list(N = uniqueN(.SD, by = UB)), list(UB = unique_by)),
+    expr = substitute(
+      list(N = data.table::uniqueN(.SD, by = UB)),
+      list(UB = unique_by)
+    ),
     by = by,
     subset = subset,
     subset_style = subset_style,
