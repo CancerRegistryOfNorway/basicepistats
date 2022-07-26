@@ -77,6 +77,11 @@ stat_absolute_risk <- function(
   at_risk_time_col_nm,
   assertion_type = "input"
 ) {
+  # @codedoc_comment_block news("basicepistats::stat_absolute_risk", "2022-07-26", "0.2.0")
+  # `basicepistats::stat_absolute_risk` gains arg
+  # `assertion_type`.
+  # @codedoc_comment_block news("basicepistats::stat_absolute_risk", "2022-07-26", "0.2.0")
+
   stat_absolute_risk_call <- match.call()
   stat_absolute_risk_env  <- environment()
 

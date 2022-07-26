@@ -56,6 +56,11 @@ stat_count <- function(
   subset_style = c("zeros", "drop")[1],
   assertion_type = "user_input"
 ) {
+  # @codedoc_comment_block news("basicepistats::stat_count", "2022-07-26", "0.2.0")
+  # `basicepistats::stat_count` gains arg
+  # `assertion_type`.
+  # @codedoc_comment_block news("basicepistats::stat_count", "2022-07-26", "0.2.0")
+
   dbc::assert_is_data_table(x, assertion_type = assertion_type)
   assert_is_arg_by(by, assertion_type = assertion_type)
   assert_is_arg_subset(subset, nrow(x), assertion_type = assertion_type)
@@ -85,6 +90,11 @@ stat_count_ <- function(
   subset_style = c("zeros", "drop")[1],
   assertion_type = "prod_input"
 ) {
+  # @codedoc_comment_block news("basicepistats::stat_count_", "2022-07-26", "0.2.0")
+  # `basicepistats::stat_count_` gains arg
+  # `assertion_type`.
+  # @codedoc_comment_block news("basicepistats::stat_count_", "2022-07-26", "0.2.0")
+
   dbc::assert_is_data_table(x, assertion_type = assertion_type)
 
   assert_is_arg_by(by, assertion_type = assertion_type)
@@ -121,6 +131,11 @@ stat_unique_count <- function(
   subset_style = c("zeros", "drop")[1],
   assertion_type = "input"
 ) {
+  # @codedoc_comment_block news("basicepistats::stat_unique_count", "2022-07-26", "0.2.0")
+  # `basicepistats::stat_unique_count` gains arg
+  # `assertion_type`.
+  # @codedoc_comment_block news("basicepistats::stat_unique_count", "2022-07-26", "0.2.0")
+
   assert_is_arg_by(by, assertion_type = assertion_type)
   assert_is_arg_subset(subset, nrow(x), assertion_type = assertion_type)
   assert_is_arg_subset_style(subset_style, assertion_type = assertion_type)
@@ -161,6 +176,11 @@ stat_unique_count_ <- function(
   subset_style = c("zeros", "drop")[1],
   assertion_type = "prod_input"
 ) {
+  # @codedoc_comment_block news("basicepistats::stat_unique_count_", "2022-07-26", "0.2.0")
+  # `basicepistats::stat_unique_count_` gains arg
+  # `assertion_type`.
+  # @codedoc_comment_block news("basicepistats::stat_unique_count_", "2022-07-26", "0.2.0")
+
   assert_is_arg_by(by, assertion_type = assertion_type)
   assert_is_arg_subset(subset, nrow(x), assertion_type = assertion_type)
   assert_is_arg_subset_style(subset_style, assertion_type = assertion_type)
@@ -191,6 +211,11 @@ stat_expr_ <- function(
   subset_style = "zeros",
   assertion_type = "prod_input"
 ) {
+  # @codedoc_comment_block news("basicepistats::stat_expr_", "2022-07-26", "0.2.0")
+  # `basicepistats::stat_expr_` gains arg
+  # `assertion_type`.
+  # @codedoc_comment_block news("basicepistats::stat_expr_", "2022-07-26", "0.2.0")
+
   dbc::assert_is_data_table(x, assertion_type = assertion_type)
   dbc::assert_has_one_of_classes(expr, classes = c("call", "name"),
                                  assertion_type = assertion_type)

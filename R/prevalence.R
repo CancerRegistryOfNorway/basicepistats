@@ -106,6 +106,10 @@ stat_prevalent_record_count <- function(
   entry_time_col_nm,
   assertion_type = "input"
 ) {
+  # @codedoc_comment_block news("basicepistats::stat_prevalent_record_count", "2022-07-26", "0.2.0")
+  # `basicepistats::stat_prevalent_record_count` gains arg
+  # `assertion_type`.
+  # @codedoc_comment_block news("basicepistats::stat_prevalent_record_count", "2022-07-26", "0.2.0")
   do.call(stat_prevalence_count, mget(names(formals(stat_prevalence_count))))
 }
 
@@ -121,6 +125,11 @@ stat_prevalence_count <- function(
   entry_time_col_nm,
   assertion_type = "input"
 ) {
+  # @codedoc_comment_block news("basicepistats::stat_prevalence_count", "2022-07-26", "0.2.0")
+  # `basicepistats::stat_prevalence_count` gains arg
+  # `assertion_type`.
+  # @codedoc_comment_block news("basicepistats::stat_prevalence_count", "2022-07-26", "0.2.0")
+
   # assertions -----------------------------------------------------------------
   dbc::assert_is_character_nonNA_atom(follow_up_time_col_nm,
                                       assertion_type = assertion_type)
@@ -275,6 +284,11 @@ stat_prevalent_subject_count_ <- function(
   entry_time_col_nm,
   assertion_type = "input"
 ) {
+  # @codedoc_comment_block news("basicepistats::stat_prevalent_subject_count_", "2022-07-26", "0.2.0")
+  # `basicepistats::stat_prevalent_subject_count_` gains arg
+  # `assertion_type`.
+  # @codedoc_comment_block news("basicepistats::stat_prevalent_subject_count_", "2022-07-26", "0.2.0")
+
   dbc::assert_is_character_nonNA_atom(subject_id_col_nm,
                                       assertion_type = assertion_type)
   dbc::assert_is_data_table_with_required_names(
@@ -314,6 +328,11 @@ stat_prevalent_subject_count <- function(
   entry_time_col_nm,
   assertion_type = "input"
 ) {
+  # @codedoc_comment_block news("basicepistats::stat_prevalent_subject_count", "2022-07-26", "0.2.0")
+  # `basicepistats::stat_prevalent_subject_count` gains arg
+  # `assertion_type`.
+  # @codedoc_comment_block news("basicepistats::stat_prevalent_subject_count", "2022-07-26", "0.2.0")
+
   dbc::assert_is_data.table(x, assertion_type = assertion_type)
   dbc::assert_is_character_nonNA_atom(follow_up_time_col_nm,
                                       assertion_type = assertion_type)
@@ -619,6 +638,11 @@ stat_year_based_prevalent_record_count <- function(
   subset_style = "zeros",
   assertion_type = "input"
 ) {
+  # @codedoc_comment_block news("basicepistats::stat_year_based_prevalent_record_count", "2022-07-26", "0.2.0")
+  # `basicepistats::stat_year_based_prevalent_record_count` gains arg
+  # `assertion_type`.
+  # @codedoc_comment_block news("basicepistats::stat_year_based_prevalent_record_count", "2022-07-26", "0.2.0")
+
   verbose <- FALSE
   call_with_arg_list("stat_year_based_prevalence_count__")
 }
@@ -644,6 +668,11 @@ stat_year_based_prevalent_subject_count <- function(
   subset_style = "zeros",
   assertion_type = "input"
 ) {
+  # @codedoc_comment_block news("basicepistats::stat_year_based_prevalent_subject_count", "2022-07-26", "0.2.0")
+  # `basicepistats::stat_year_based_prevalent_subject_count` gains arg
+  # `assertion_type`.
+  # @codedoc_comment_block news("basicepistats::stat_year_based_prevalent_subject_count", "2022-07-26", "0.2.0")
+
   dbc::assert_is_data.table(x)
   dbc::assert_is_character_nonNA_atom(subject_id_col_nm,
                                       assertion_type = assertion_type)
@@ -685,6 +714,10 @@ stat_year_based_prevalent_subject_count_ <- function(
   subset_style = "zeros",
   assertion_type = "input"
 ) {
+  # @codedoc_comment_block news("basicepistats::stat_year_based_prevalent_subject_count_", "2022-07-26", "0.2.0")
+  # `basicepistats::stat_year_based_prevalent_subject_count_` gains arg
+  # `assertion_type`.
+  # @codedoc_comment_block news("basicepistats::stat_year_based_prevalent_subject_count_", "2022-07-26", "0.2.0")
   dbc::assert_is_character_nonNA_atom(subject_id_col_nm,
                                       assertion_type = assertion_type)
   dbc::assert_is_data_table_with_required_names(
