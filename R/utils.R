@@ -349,56 +349,67 @@ assert_is_arg_by <- function(
 
 
 call_with_arg_list <- function(
-  fun,
-  arg_list = NULL,
-  envir = NULL
-) {
-  dbc::assert_is_character_nonNA_atom(
     fun,
+    arg_list = NULL,
+    envir = NULL,
     assertion_type = "prod_input"
+) {
+  dbc::assert_is_one_of(
+    fun,
+    funs = list(dbc::report_is_function,
+                dbc::report_is_character_nonNA_atom),
+    assertion_type = assertion_type
   )
-  arg_list_expr <- substitute(arg_list)
   dbc::assert_is_one_of(
     arg_list,
-    funs = list(dbc::report_is_NULL,
-                dbc::report_is_uniquely_named_list),
-    assertion_type = "prod_input"
+    funs = list(dbc::report_is_list,
+                dbc::report_is_NULL),
+    assertion_type = assertion_type
   )
+  if (is.null(arg_list)) {
+    arg_list <- list()
+  }
   dbc::assert_is_one_of(
     envir,
-    funs = list(dbc::report_is_NULL,
-                dbc::report_is_environment),
-    assertion_type = "prod_input"
+    funs = list(dbc::report_is_environment,
+                dbc::report_is_NULL),
+    assertion_type = assertion_type
   )
-
-  fun_nm <- fun
-  fun <- tryCatch(eval(parse(text = fun)),
-                  error = function(e) e)
-  if (inherits(fun, "error")) {
-    stop("Internal error: could not find object ", fun)
-  }
-
-  if (is.null(arg_list)) {
-    arg_nms <- names(formals(fun))
-    arg_list_expr <- paste0(
-      "list(",
-      paste0(arg_nms, " = ", arg_nms, collapse = ", "),
-      ")"
-    )
-    arg_list_expr <- parse(text = arg_list_expr)[[1L]]
-  }
-
   if (is.null(envir)) {
     envir <- parent.frame(1L)
   }
 
-  arg_list_expr_list <- as.list(arg_list_expr)[-1]
-  expr <- do.call(
+  fun_expr <- substitute(fun)
+  if (is.character(fun)) {
+    fun_nm <- fun
+    fun <- eval(parse(text = fun_nm), envir = envir)
+  } else if (is.name(fun_expr)) {
+    fun_nm <- deparse1(fun_expr)
+  } else {
+    fun_nm <- "an_anonymous_function"
+  }
+
+  arg_exprs <- lapply(seq_along(arg_list), function(i) {
+    is_unnamed_arg <- names(arg_list)[i] == ""
+    if (is_unnamed_arg) {
+      substitute(arg_list[[i]], list(i = i))
+    } else {
+      substitute(arg_list[[arg_nm]], list(arg_nm = names(arg_list)[i]))
+    }
+  })
+  names(arg_exprs) <- names(arg_list)
+
+  eval_expr <- do.call(
     call,
-    c(list(name = fun_nm), arg_list_expr_list),
+    c(name = fun_nm, arg_exprs),
     quote = TRUE
   )
-  eval(expr, envir = envir)
+
+  eval_env <- new.env(parent = envir)
+  eval_env[["arg_list"]] <- arg_list
+
+  return(eval(eval_expr, envir = eval_env))
 }
+
 
 
