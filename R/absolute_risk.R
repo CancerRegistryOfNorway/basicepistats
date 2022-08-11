@@ -196,13 +196,8 @@ stat_absolute_risk <- function(
       assertion_type = assertion_type
     )
   })
-  dbc::report_to_assertion(
-    dbc::expressions_to_report(
-      list(quote(length(event_count_col_nms) >= 1L)),
-      call = stat_absolute_risk_call
-    ),
-    assertion_type = assertion_type
-  )
+  dbc::assert_is("length(event_count_col_nms) >= 1L",
+                 assertion_type = assertion_type)
   # @codedoc_comment_block basicepistats::stat_absolute_risk
   # @param at_risk_time_col_nm `[character]` (no default)
   #
@@ -292,13 +287,8 @@ stat_absolute_risk <- function(
     x, required_names = setdiff(col_nm_dt[["x"]], NA_character_),
     assertion_type = assertion_type
   )
-  dbc::report_to_assertion(
-    dbc::expressions_to_report(
-      list(quote(
-        !duplicated(x, by = intersect(tmp_col_nm_sets[["unique_id"]], names(x)))
-      )),
-      call = stat_absolute_risk_call
-    ),
+  dbc::assert_is(
+    quote(!duplicated(x, by = intersect(tmp_col_nm_sets[["unique_id"]], names(x)))),
     assertion_type = assertion_type
   )
   dt <- local({
