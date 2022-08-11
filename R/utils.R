@@ -366,9 +366,6 @@ call_with_arg_list <- function(
                 dbc::report_is_NULL),
     assertion_type = assertion_type
   )
-  if (is.null(arg_list)) {
-    arg_list <- list()
-  }
   dbc::assert_is_one_of(
     envir,
     funs = list(dbc::report_is_environment,
@@ -387,6 +384,9 @@ call_with_arg_list <- function(
     fun_nm <- deparse1(fun_expr)
   } else {
     fun_nm <- "an_anonymous_function"
+  }
+  if (is.null(arg_list)) {
+    arg_list <- mget(names(formals(fun)), envir = envir)
   }
 
   arg_exprs <- lapply(seq_along(arg_list), function(i) {
