@@ -529,6 +529,12 @@ stat_year_based_prevalence_count__ <- function(
     message("* basicepistats:::stat_year_based_prevalence_count__: ",
             "whole run done; ", data.table::timetaken(whole_run_start_time))
   }
+  stat_table_set(
+    output,
+    stratum_col_nms = union(names(by),
+                            c("observation_year", "full_years_since_entry")),
+    value_col_nms = "N"
+  )
   return(output[])
 }
 

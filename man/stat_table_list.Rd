@@ -26,7 +26,8 @@ and \code{varying_arg_list} cannot contain the same arguments.}
 
 \item{stat_fun_nm}{\verb{[character]} (mandatory, no default)
 
-name of a function; must be discoverable by \link{match.fun}}
+Name of a function; must be discoverable by \link{match.fun}. The function must
+return a \code{stat_table} --- see \code{?basicepistats::stat_table}.}
 }
 \description{
 Call statistics function multiple times to create a list

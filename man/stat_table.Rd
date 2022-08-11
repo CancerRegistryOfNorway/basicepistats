@@ -2,49 +2,36 @@
 % Please edit documentation in R/stat_table.R
 \name{stat_table}
 \alias{stat_table}
-\alias{stat_table_meta}
-\alias{stat_table_stratum_col_nms}
-\alias{stat_table_value_col_nms}
-\alias{set_stat_table}
+\alias{stat_table_meta_get}
+\alias{stat_table_set}
 \alias{as.stat_table}
-\alias{as.stat_table.data.frame}
+\alias{as.stat_table.data.table}
 \alias{print.stat_table}
 \alias{[.stat_table}
-\alias{[<-.stat_table}
-\alias{[[<-.stat_table}
 \title{Stat Tables}
 \usage{
-stat_table_meta(x)
+stat_table_meta_get(x)
 
-stat_table_stratum_col_nms(x)
+stat_table_set(x, stratum_col_nms = character(0), value_col_nms = character(0))
 
-stat_table_value_col_nms(x)
+stat_table(x, stratum_col_nms = character(0), value_col_nms = character(0))
 
-set_stat_table(x, stratum_col_nms, value_col_nms)
+as.stat_table(x, stratum_col_nms = character(0), value_col_nms = character(0))
 
-stat_table(x, stratum_col_nms, value_col_nms)
-
-as.stat_table(x, stratum_col_nms, value_col_nms)
-
-\method{as.stat_table}{data.frame}(x, stratum_col_nms, value_col_nms)
+\method{as.stat_table}{data.table}(x, stratum_col_nms, value_col_nms)
 
 \method{print}{stat_table}(x, ...)
 
 \method{[}{stat_table}(x, ...)
-
-\method{[}{stat_table}(x, ...) <- value
-
-\method{[[}{stat_table}(x, ...) <- value
 }
 \arguments{
 \item{x}{\verb{[R object]} (mandatory, no default)
 \itemize{
-\item \code{stat_table}, \code{as.stat_table}, \code{set_stat_table}:
+\item \code{stat_table}, \code{as.stat_table}, \code{stat_table_set}:
 an R object to coerce to \code{stat_table}
 \item \code{print.stat_table}: object to print
 \item \verb{[.stat_table}: object to extract from
-\item \code{stat_table_meta}, \code{stat_table_stratum_col_nms}
-\code{stat_table_value_col_nms}: object to extract \code{stat_table} meta data from
+\item \code{stat_table_meta_get}: object to extract \code{stat_table} meta data from
 }}
 
 \item{stratum_col_nms}{\verb{[character]} (mandatory, no default)
@@ -56,8 +43,6 @@ names of stratifying columns in \code{x}}
 names of columns in \code{x} containing the actual values (statistics)}
 
 \item{...}{passed to next method (see \code{?"["})}
-
-\item{value}{see \code{?"[<-"}}
 }
 \description{
 Class \code{stat_table} methods and functions.

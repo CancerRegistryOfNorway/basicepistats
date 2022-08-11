@@ -24,7 +24,8 @@
 #' and `varying_arg_list` cannot contain the same arguments.
 #' @param stat_fun_nm `[character]` (mandatory, no default)
 #'
-#' name of a function; must be discoverable by [match.fun]
+#' Name of a function; must be discoverable by [match.fun]. The function must
+#' return a `stat_table` --- see `?basicepistats::stat_table`.
 #' @export
 #' @examples
 #' library("data.table")
@@ -44,9 +45,9 @@
 #' )
 #'
 stat_table_list <- function(
-  varying_arg_list,
-  fixed_arg_list = list(),
-  stat_fun_nm
+    varying_arg_list,
+    fixed_arg_list = list(),
+    stat_fun_nm
 ) {
   match.fun(stat_fun_nm)
   stopifnot(
@@ -66,69 +67,88 @@ stat_table_list <- function(
       arg_set[[table_no]]
     })
     arg_list[names(varying_arg_list)] <- varied
-    call_with_arg_list(stat_fun_nm, arg_list = arg_list)
+    st <- call_with_arg_list(stat_fun_nm, arg_list = arg_list)
+    if (!inherits(st, stat_table_class_name())) {
+      stop("stat_fun_nm = \"", stat_fun_nm, "\" did not return an object with ",
+           "class \"", stat_table_class_name(), "\"")
+    }
+    return(st)
   })
-  data.table::setattr(
-    stat_table_list, "class", union("stat_table_list", class(stat_table_list))
-  )
-  data.table::setattr(
-    stat_table_list, "table_list_meta", list(
-      stat_fun_nm = rep(stat_fun_nm, length(stat_table_list))
-    )
+  stat_table_list_set(
+    stat_table_list,
+    stat_fun_nms = rep(stat_fun_nm, length(stat_table_list))
   )
   return(stat_table_list)
 }
 
+stat_table_list_set <- function(x, stat_fun_nms) {
+  dbc::assert_is("length(stat_fun_nms) == nrow(x)",
+                 assertion_type = "input")
+  stat_table_list_class_set(x)
+  stat_table_list_meta_set(x, stat_fun_nms = stat_fun_nms)
+}
+
+stat_table_list_meta_name <- function() "stat_table_list_meta"
+stat_table_list_meta_get <- function(x) {
+  data.table::copy(attr(x, stat_table_list_meta_name()))
+}
+stat_table_list_meta_set <- function(x, stat_fun_nms) {
+  dbc::assert_is("length(stat_fun_nms) == nrow(x)",
+                 assertion_type = "input")
+  meta <- data.table::data.table(stat_fun_nm = stat_fun_nms)
+  data.table::setattr(x, stat_table_list_meta_name(), meta)
+}
+
+stat_table_list_class_name <- function() "stat_table_list"
+stat_table_list_class_set <- function(x) {
+  data.table::setattr(x, "class", c(stat_table_list_class_name(), "list"))
+}
+
+
 
 #' @export
 "[.stat_table_list" <- function(x, i, ...) {
-  x_meta <- data.table::copy(attr(x, "table_list_meta"))
-  data.table::setattr(x, "class", "list")
-  x_subset <- x[i]
-  data.table::setattr(x, "class", c("stat_table_list", "list"))
-  data.table::setattr(
-    x_subset, "class", union("stat_table_list", class(x_subset))
-  )
-  which_were_kept <- match(x_subset, x)
-  x_meta[["stat_fun_nm"]] <- x_meta[["stat_fun_nm"]][which_were_kept]
-  data.table::setattr(x_subset, "table_list_meta", x_meta)
-  x_subset
+  y <- NextMethod()
+  x_meta <- stat_table_list_meta_get(x)
+  y_meta <- x_meta
+  y_meta[["stat_fun_nm"]] <- y_meta[["stat_fun_nm"]][i]
+  stat_table_list_set(y, y_meta)
+  return(y)
 }
 
 #' @export
 print.stat_table_list <- function(x, ...) {
-  cat("stat_table_list of length ", length(x), "\n:")
-  meta <- attr(x, "table_list_meta")
-  stat_fun_nms <- meta[["stat_fun_nm"]]
+  cat("* stat_table_list of length", length(x), "\n")
+  cat("* access stat_table objects using e.g. x[[1]]\n")
+  stl_meta_dt <- stat_table_list_meta_get(x)
   dt <- data.table::rbindlist(lapply(seq_along(x), function(pos) {
-    table <- x[[pos]]
-    data.table::setDT(list(
-      stat_fun_nm = stat_fun_nms[pos],
-      col_nm_set = deparse(names(table)),
-      n_rows = nrow(table)
-    ))
+    stat_table <- x[[pos]]
+    info_dt <- stl_meta_dt[pos, ]
+    st_meta_list <- stat_table_meta_get(stat_table)
+    lapply(names(st_meta_list), function(nm) {
+      info_dt[, (nm) := list(st_meta_list[nm])]
+      NULL
+    })
+    info_dt[, "col_nm_set" := list(list(names(stat_table)))]
+    info_dt[, "n_row" := nrow(stat_table)]
+    return(info_dt)
   }))
   print(dt)
 }
 
 #' @export
 c.stat_table_list <- function(...) {
-  tll <- data.table::copy(list(...))
+  stll <- data.table::copy(list(...))
   stopifnot(
-    vapply(tll, inherits, logical(1L), what = "stat_table_list")
+    vapply(stll, inherits, logical(1L), what = stat_table_list_class_name())
   )
-  invisible(lapply(tll, function(tl) {
-    data.table::setattr(tl, "class", "list")
+  invisible(lapply(stll, function(stl) {
+    data.table::setattr(stl, "class", "list")
+    NULL
   }))
-  tl <- do.call(c, tll)
-  data.table::setattr(tl, "class", c("stat_table_list", "list"))
-  meta_list <- lapply(tll, attr, which = "table_list_meta")
-  meta <- list(
-    stat_fun_nm = unlist(lapply(meta_list, function(meta) {
-      meta[["stat_fun_nm"]]
-    }))
-  )
-  data.table::setattr(tl, "table_list_meta", meta)
-  tl
+  stl <- do.call(c, stll)
+  meta <- data.table::rbindlist(lapply(stll, stat_table_list_meta_get))
+  stat_table_list_set(stl, stat_fun_nms = meta[["stat_fun_nm"]])
+  return(stl)
 }
 
