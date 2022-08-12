@@ -110,6 +110,18 @@ print.stat_table <- function(x, ...) {
 #' @rdname stat_table
 #' @export
 #' @param ... passed to next method (see `?"["`)
+#' @examples
+#'
+#' # basicepistats::`[.stat_table`
+#' dt <- data.table::CJ(sex = 1:2, agegroup = 1:18)
+#' dt[, "n" := sample(1e3L, .N)]
+#' basicepistats::stat_table_set(dt, stratum_col_nms = c("sex", "agegroup"),
+#'                               value_col_nms = "n")
+#'
+#' stopifnot(
+#'   inherits(dt[1:3, ], class(dt)[1]),
+#'   dt[1:3, sum(.SD[[1]]), .SDcols = "sex"] == 3
+#' )
 "[.stat_table" <- function(x, ...) {
   y <- NextMethod()
   if (is.data.frame(y)) {
