@@ -2,3 +2,5 @@
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^man-roxygen$
+^Rplots\.pdf$
+^data-raw$
