@@ -66,7 +66,7 @@ stat_count <- function(
   assert_is_arg_subset(subset, nrow(x), assertion_type = assertion_type)
   assert_is_arg_subset_style(subset_style, assertion_type = assertion_type)
 
-  stat_expr_(
+  dt <- stat_expr_(
     x = x,
     expr = quote(list(N = .N)),
     by = by,
@@ -74,6 +74,7 @@ stat_count <- function(
     subset_style = subset_style,
     assertion_type = "prod_input"
   )
+  return(dt[])
 }
 
 
@@ -101,7 +102,7 @@ stat_count_ <- function(
   assert_is_arg_subset(subset, nrow(x), assertion_type = assertion_type)
   assert_is_arg_subset_style(subset_style, assertion_type = assertion_type)
 
-  stat_expr_(
+  dt <- stat_expr_(
     x = x,
     expr = quote(list(N = .N)),
     by = by,
@@ -109,6 +110,7 @@ stat_count_ <- function(
     subset_style = subset_style,
     assertion_type = "prod_input"
   )
+  return(dt[])
 }
 
 
@@ -148,7 +150,7 @@ stat_unique_count <- function(
     required_names = unique_by,
     assertion_type = assertion_type
   )
-  stat_unique_count_(
+  dt <- stat_unique_count_(
     x = x,
     unique_by = unique_by,
     by = by,
@@ -156,6 +158,7 @@ stat_unique_count <- function(
     subset_style = subset_style,
     assertion_type = "prod_input"
   )
+  return(dt[])
 }
 
 #' @rdname counts
@@ -192,7 +195,7 @@ stat_unique_count_ <- function(
     required_names = unique_by,
     assertion_type = assertion_type
   )
-  stat_expr_(
+  dt <- stat_expr_(
     x = x,
     expr = substitute(
       list(N = data.table::uniqueN(.SD, by = UB)),
@@ -203,6 +206,7 @@ stat_unique_count_ <- function(
     subset_style = subset_style,
     assertion_type = "prod_input"
   )
+  return(dt[])
 }
 
 #' @importFrom data.table .N

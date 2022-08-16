@@ -59,7 +59,7 @@ stat_table_set <- function(
   dbc::assert_vector_elems_are_in_set(value_col_nms, set = names(x))
   stat_table_class_set(x)
   stat_table_meta_set(x, mget(c("stratum_col_nms", "value_col_nms")))
-  invisible(NULL)
+  return(invisible(NULL))
 }
 
 #' @rdname stat_table
