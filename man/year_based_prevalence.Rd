@@ -16,6 +16,7 @@ stat_year_based_prevalent_record_count(
   by = NULL,
   subset = NULL,
   subset_style = "zeros",
+  melt = NULL,
   assertion_type = "input"
 )
 
@@ -29,6 +30,7 @@ stat_year_based_prevalent_subject_count(
   by = NULL,
   subset = NULL,
   subset_style = "zeros",
+  melt = NULL,
   assertion_type = "input"
 )
 
@@ -42,6 +44,7 @@ stat_year_based_prevalent_subject_count_(
   by = NULL,
   subset = NULL,
   subset_style = "zeros",
+  melt = NULL,
   assertion_type = "input"
 )
 }
@@ -111,6 +114,21 @@ will have zero counts
 (zero counts are impossible)
 }}
 
+\item{melt}{\verb{[NULL, list]} (default \code{NULL})
+
+You may use this argument to easily melt
+(see \verb{[data.table::melt.data.table]}) stratifying columns of your choice.
+E.g. \code{list(area = c("area_1", "area_2"))} to combine to area columns into
+one.
+
+The table is re-aggregated if any melting is performed by summing the
+value columns. This avoids duplicated strata in the table.
+\itemize{
+\item \code{NULL}: No melting performed.
+\item \code{list}: List of one or more elements, where each element is a character
+string vector of column names existing in the table.
+}}
+
 \item{assertion_type}{\verb{[character]}
 
 Passed to one or more assertions. See e.g. \verb{[dbc::report_to_assertion]}.}
@@ -171,16 +189,20 @@ The result is a table of counts by \code{observation_year},
 }
 
 \examples{
+
+# basicepistats::stat_year_based_prevalent_record_count
 library("data.table")
 my_dataset <- data.table::data.table(
   id = 1:4,
   sex = c(1L, 1L, 2L, 2L),
+  area_1 = c(10L, 20L, 10L, 20L),
+  area_2 = c(11L, 21L, 12L, 22L),
   entry_year = 2000:2003,
   exit_year = 2000:2003 + 1:4
 )
 
-# NOTE: person that entered in 2003 _is_ counted, person that left in 2003
-# is _not_ counted
+## NOTE: person that entered in 2003 _is_ counted, person that left in 2003
+## is _not_ counted
 basicepistats::stat_year_based_prevalent_record_count(
   x = my_dataset,
   entry_year_col_nm = "entry_year",
@@ -188,6 +210,27 @@ basicepistats::stat_year_based_prevalent_record_count(
   maximum_follow_up_years = c(1L, 3L, 5L, 100L),
   by = "sex",
   observation_years = 2003L
+)
+
+## melting
+stratum_dt <- data.table::CJ(
+  sex = unique(my_dataset[["sex"]]),
+  area_1 = c(10L, 20L),
+  area_2 = 1:2
+)
+stratum_dt[, "area_2" := stratum_dt[["area_1"]] + stratum_dt[["area_2"]]]
+observed <- basicepistats::stat_year_based_prevalent_record_count(
+  x = my_dataset,
+  entry_year_col_nm = "entry_year",
+  exit_year_col_nm = "exit_year",
+  maximum_follow_up_years = c(1L, 3L, 5L, 100L),
+  by = stratum_dt,
+  observation_years = 2003L,
+  melt = list(area = c("area_1", "area_2"))
+)
+expected_nrows <- 2L * 6L * 4L # sex, area, full_years_since_entry
+stopifnot(
+  nrow(observed) == expected_nrows
 )
 
 }

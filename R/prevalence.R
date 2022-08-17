@@ -96,15 +96,15 @@ NULL
 #' )
 #'
 stat_prevalent_record_count <- function(
-  x,
-  follow_up_time_col_nm,
-  follow_up_time_window_widths = Inf,
-  by = NULL,
-  subset = NULL,
-  subset_style = "zeros",
-  observation_time_points,
-  entry_time_col_nm,
-  assertion_type = "input"
+    x,
+    follow_up_time_col_nm,
+    follow_up_time_window_widths = Inf,
+    by = NULL,
+    subset = NULL,
+    subset_style = "zeros",
+    observation_time_points,
+    entry_time_col_nm,
+    assertion_type = "input"
 ) {
   # @codedoc_comment_block news("basicepistats::stat_prevalent_record_count", "2022-07-26", "0.2.0")
   # `basicepistats::stat_prevalent_record_count` gains arg
@@ -115,15 +115,15 @@ stat_prevalent_record_count <- function(
 
 #' @importFrom data.table :=
 stat_prevalence_count <- function(
-  x,
-  follow_up_time_col_nm,
-  follow_up_time_window_widths = Inf,
-  by = NULL,
-  subset = NULL,
-  subset_style = "zeros",
-  observation_time_points,
-  entry_time_col_nm,
-  assertion_type = "input"
+    x,
+    follow_up_time_col_nm,
+    follow_up_time_window_widths = Inf,
+    by = NULL,
+    subset = NULL,
+    subset_style = "zeros",
+    observation_time_points,
+    entry_time_col_nm,
+    assertion_type = "input"
 ) {
   # @codedoc_comment_block news("basicepistats::stat_prevalence_count", "2022-07-26", "0.2.0")
   # `basicepistats::stat_prevalence_count` gains arg
@@ -220,7 +220,10 @@ stat_prevalence_count <- function(
         stop("internal error: subset not logical, integer, nor NULL")
       }
       count_dt <- stat_count_(
-        x = dt, by = by, subset = subset, subset_style = subset_style
+        x = dt,
+        by = by,
+        subset = subset,
+        subset_style = subset_style
       )
       data.table::set(count_dt, j = entry_time_col_nm,
                       value = obs_t_point)
@@ -236,11 +239,17 @@ stat_prevalence_count <- function(
   all_col_nms <- c(nonvalue_col_nms, "N")
   data.table::setcolorder(count_dt, all_col_nms)
   data.table::setkeyv(count_dt, nonvalue_col_nms)
+  basicepistats::stat_table_set(
+    x = count_dt,
+    stratum_col_nms = nonvalue_col_nms,
+    value_col_nms = "N"
+  )
+  count_dt <- melt_sum(count_dt, melt = melt)
   N <- NULL # to appease R CMD CHECK
   count_dt[
     j = "N" := cumsum(N),
     by = eval(setdiff(nonvalue_col_nms, "time_since_entry"))
-    ]
+  ]
   data.table::setnames(count_dt, entry_time_col_nm, "time_of_observation")
   return(count_dt[])
 }
@@ -273,16 +282,16 @@ stat_prevalence_count <- function(
 #' )
 #'
 stat_prevalent_subject_count_ <- function(
-  x,
-  follow_up_time_col_nm,
-  follow_up_time_window_widths = Inf,
-  subject_id_col_nm,
-  by = NULL,
-  subset = NULL,
-  subset_style = "zeros",
-  observation_time_points,
-  entry_time_col_nm,
-  assertion_type = "input"
+    x,
+    follow_up_time_col_nm,
+    follow_up_time_window_widths = Inf,
+    subject_id_col_nm,
+    by = NULL,
+    subset = NULL,
+    subset_style = "zeros",
+    observation_time_points,
+    entry_time_col_nm,
+    assertion_type = "input"
 ) {
   # @codedoc_comment_block news("basicepistats::stat_prevalent_subject_count_", "2022-07-26", "0.2.0")
   # `basicepistats::stat_prevalent_subject_count_` gains arg
@@ -317,16 +326,16 @@ stat_prevalent_subject_count_ <- function(
 #'  by the end-user
 #' @export
 stat_prevalent_subject_count <- function(
-  x,
-  follow_up_time_col_nm,
-  follow_up_time_window_widths = Inf,
-  subject_id_col_nm,
-  by = NULL,
-  subset = NULL,
-  subset_style = "zeros",
-  observation_time_points,
-  entry_time_col_nm,
-  assertion_type = "input"
+    x,
+    follow_up_time_col_nm,
+    follow_up_time_window_widths = Inf,
+    subject_id_col_nm,
+    by = NULL,
+    subset = NULL,
+    subset_style = "zeros",
+    observation_time_points,
+    entry_time_col_nm,
+    assertion_type = "input"
 ) {
   # @codedoc_comment_block news("basicepistats::stat_prevalent_subject_count", "2022-07-26", "0.2.0")
   # `basicepistats::stat_prevalent_subject_count` gains arg
@@ -358,16 +367,17 @@ stat_prevalent_subject_count <- function(
 
 #' @importFrom data.table := .EACHI .SD
 stat_year_based_prevalence_count__ <- function(
-  x,
-  entry_year_col_nm,
-  exit_year_col_nm,
-  observation_years,
-  maximum_follow_up_years = c(1L, 3L, 5L, 1e3L),
-  by = NULL,
-  subset = NULL,
-  subset_style = "zeros",
-  verbose = FALSE,
-  assertion_type = "prod_input"
+    x,
+    entry_year_col_nm,
+    exit_year_col_nm,
+    observation_years,
+    maximum_follow_up_years = c(1L, 3L, 5L, 1e3L),
+    by = NULL,
+    subset = NULL,
+    subset_style = "zeros",
+    melt = NULL,
+    verbose = FALSE,
+    assertion_type = "prod_input"
 ) {
 
   # @codedoc_comment_block stat_year_based_prevalence_count__
@@ -517,6 +527,14 @@ stat_year_based_prevalence_count__ <- function(
   all_col_nms <- c(nonvalue_col_nms, "N")
   data.table::setcolorder(output, all_col_nms)
   data.table::setkeyv(output, nonvalue_col_nms)
+  basicepistats::stat_table_set(
+    x = output,
+    stratum_col_nms = nonvalue_col_nms,
+    value_col_nms = "N"
+  )
+  output <- melt_sum(output, melt = melt)
+  meta <- basicepistats::stat_table_meta_get(output)
+  nonvalue_col_nms <- meta[["stratum_col_nms"]]
   output[
     j = "N" := cumsum(.SD[[1L]]),
     .SDcols = "N",
@@ -529,12 +547,6 @@ stat_year_based_prevalence_count__ <- function(
     message("* basicepistats:::stat_year_based_prevalence_count__: ",
             "whole run done; ", data.table::timetaken(whole_run_start_time))
   }
-  stat_table_set(
-    output,
-    stratum_col_nms = union(names(by),
-                            c("observation_year", "full_years_since_entry")),
-    value_col_nms = "N"
-  )
   return(output[])
 }
 
@@ -589,6 +601,7 @@ codedoc_stat_year_based_prevalence_count <- function() {
 #' @template arg_subset
 #' @template arg_subset_style
 #' @template arg_assertion_type
+#' @template arg_melt
 #' @details
 #'
 #' The following logic determines whether a record is prevalent at a specific
@@ -613,16 +626,20 @@ codedoc_stat_year_based_prevalence_count <- function() {
 #' @eval codedoc_stat_year_based_prevalence_count()
 #'
 #' @examples
+#'
+#' # basicepistats::stat_year_based_prevalent_record_count
 #' library("data.table")
 #' my_dataset <- data.table::data.table(
 #'   id = 1:4,
 #'   sex = c(1L, 1L, 2L, 2L),
+#'   area_1 = c(10L, 20L, 10L, 20L),
+#'   area_2 = c(11L, 21L, 12L, 22L),
 #'   entry_year = 2000:2003,
 #'   exit_year = 2000:2003 + 1:4
 #' )
 #'
-#' # NOTE: person that entered in 2003 _is_ counted, person that left in 2003
-#' # is _not_ counted
+#' ## NOTE: person that entered in 2003 _is_ counted, person that left in 2003
+#' ## is _not_ counted
 #' basicepistats::stat_year_based_prevalent_record_count(
 #'   x = my_dataset,
 #'   entry_year_col_nm = "entry_year",
@@ -632,17 +649,39 @@ codedoc_stat_year_based_prevalence_count <- function() {
 #'   observation_years = 2003L
 #' )
 #'
+#' ## melting
+#' stratum_dt <- data.table::CJ(
+#'   sex = unique(my_dataset[["sex"]]),
+#'   area_1 = c(10L, 20L),
+#'   area_2 = 1:2
+#' )
+#' stratum_dt[, "area_2" := stratum_dt[["area_1"]] + stratum_dt[["area_2"]]]
+#' observed <- basicepistats::stat_year_based_prevalent_record_count(
+#'   x = my_dataset,
+#'   entry_year_col_nm = "entry_year",
+#'   exit_year_col_nm = "exit_year",
+#'   maximum_follow_up_years = c(1L, 3L, 5L, 100L),
+#'   by = stratum_dt,
+#'   observation_years = 2003L,
+#'   melt = list(area = c("area_1", "area_2"))
+#' )
+#' expected_nrows <- 2L * 6L * 4L # sex, area, full_years_since_entry
+#' stopifnot(
+#'   nrow(observed) == expected_nrows
+#' )
+#'
 #' @export
 stat_year_based_prevalent_record_count <- function(
-  x,
-  entry_year_col_nm,
-  exit_year_col_nm,
-  observation_years,
-  maximum_follow_up_years = c(1L, 3L, 5L, 1e3L),
-  by = NULL,
-  subset = NULL,
-  subset_style = "zeros",
-  assertion_type = "input"
+    x,
+    entry_year_col_nm,
+    exit_year_col_nm,
+    observation_years,
+    maximum_follow_up_years = c(1L, 3L, 5L, 1e3L),
+    by = NULL,
+    subset = NULL,
+    subset_style = "zeros",
+    melt = NULL,
+    assertion_type = "input"
 ) {
   # @codedoc_comment_block news("basicepistats::stat_year_based_prevalent_record_count", "2022-07-26", "0.2.0")
   # `basicepistats::stat_year_based_prevalent_record_count` gains arg
@@ -663,16 +702,17 @@ stat_year_based_prevalent_record_count <- function(
 #'   the end-user
 #' @export
 stat_year_based_prevalent_subject_count <- function(
-  x,
-  entry_year_col_nm,
-  exit_year_col_nm,
-  observation_years,
-  subject_id_col_nm,
-  maximum_follow_up_years = c(1L, 3L, 5L, 1e3L),
-  by = NULL,
-  subset = NULL,
-  subset_style = "zeros",
-  assertion_type = "input"
+    x,
+    entry_year_col_nm,
+    exit_year_col_nm,
+    observation_years,
+    subject_id_col_nm,
+    maximum_follow_up_years = c(1L, 3L, 5L, 1e3L),
+    by = NULL,
+    subset = NULL,
+    subset_style = "zeros",
+    melt = NULL,
+    assertion_type = "input"
 ) {
   # @codedoc_comment_block news("basicepistats::stat_year_based_prevalent_subject_count", "2022-07-26", "0.2.0")
   # `basicepistats::stat_year_based_prevalent_subject_count` gains arg
@@ -709,16 +749,17 @@ stat_year_based_prevalent_subject_count <- function(
 #' @export
 #' @importFrom data.table .SD
 stat_year_based_prevalent_subject_count_ <- function(
-  x,
-  entry_year_col_nm,
-  exit_year_col_nm,
-  observation_years,
-  subject_id_col_nm,
-  maximum_follow_up_years = c(1L, 3L, 5L, 1e3L),
-  by = NULL,
-  subset = NULL,
-  subset_style = "zeros",
-  assertion_type = "input"
+    x,
+    entry_year_col_nm,
+    exit_year_col_nm,
+    observation_years,
+    subject_id_col_nm,
+    maximum_follow_up_years = c(1L, 3L, 5L, 1e3L),
+    by = NULL,
+    subset = NULL,
+    subset_style = "zeros",
+    melt = NULL,
+    assertion_type = "input"
 ) {
   # @codedoc_comment_block news("basicepistats::stat_year_based_prevalent_subject_count_", "2022-07-26", "0.2.0")
   # `basicepistats::stat_year_based_prevalent_subject_count_` gains arg
@@ -746,7 +787,7 @@ stat_year_based_prevalent_subject_count_ <- function(
     data.table::setkeyv(tmp_dt, c(subject_id_col_nm, entry_year_col_nm))
     wh_earliest_record_by_subject <- tmp_dt[[".__row_number"]][
       !duplicated(tmp_dt, by = subject_id_col_nm)
-      ]
+    ]
 
     if (is.logical(subset)) {
       subset <- intersect(which(subset), wh_earliest_record_by_subject)

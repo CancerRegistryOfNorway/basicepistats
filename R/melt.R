@@ -6,8 +6,8 @@ assert_is_arg_melt <- function(
     assertion_type = "input",
     allowed_col_nms
 ) {
-  call <- fcrassert::handle_arg_call(call)
-  x_nm <- fcrassert::handle_arg_x_nm(x_nm)
+  call <- dbc::handle_arg_call(call)
+  x_nm <- dbc::handle_arg_x_nm(x_nm)
 
   dbc::assert_is_one_of(
     x,
@@ -15,7 +15,7 @@ assert_is_arg_melt <- function(
                 dbc::report_is_uniquely_named_list),
     assertion_type = assertion_type
   )
-  if (!is_null(x)) {
+  if (!is.null(x)) {
     lapply(names(x), function(nm) {
       dbc::assert_is_character_nonNA_vector(
         x = x[[nm]],
@@ -39,7 +39,7 @@ melt_sum <- function(dt, melt = NULL) {
   if (is.null(melt)) {
     return(dt[])
   }
-  dbc::assert_inherits(dt, required.class = "stat_table")
+  dbc::assert_inherits(dt, required_class = "stat_table")
 
   dt_meta <- basicepistats::stat_table_meta_get(dt)
   stratum_col_nms <- dt_meta[["stratum_col_nms"]]
