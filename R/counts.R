@@ -13,6 +13,7 @@
 #' @template arg_subset_style
 #' @template arg_by
 #' @template arg_assertion_type
+#' @template arg_melt
 #' @examples
 #' library("data.table")
 #' sls <- data.table::CJ(sex = 1:2, area_2 = 1:5)
@@ -54,6 +55,7 @@ stat_count <- function(
   by = NULL,
   subset = NULL,
   subset_style = c("zeros", "drop")[1],
+  melt = NULL,
   assertion_type = "user_input"
 ) {
   # @codedoc_comment_block news("basicepistats::stat_count", "2022-07-26", "0.2.0")
@@ -65,6 +67,8 @@ stat_count <- function(
   assert_is_arg_by(by, assertion_type = assertion_type)
   assert_is_arg_subset(subset, nrow(x), assertion_type = assertion_type)
   assert_is_arg_subset_style(subset_style, assertion_type = assertion_type)
+  assert_is_arg_melt(melt, allowed_col_nms = names(x),
+                     assertion_type = assertion_type)
 
   dt <- stat_expr_(
     x = x,
@@ -74,6 +78,7 @@ stat_count <- function(
     subset_style = subset_style,
     assertion_type = "prod_input"
   )
+  dt <- melt_sum(dt = dt, melt = melt)
   return(dt[])
 }
 
@@ -89,6 +94,7 @@ stat_count_ <- function(
   by = NULL,
   subset = NULL,
   subset_style = c("zeros", "drop")[1],
+  melt = NULL,
   assertion_type = "prod_input"
 ) {
   # @codedoc_comment_block news("basicepistats::stat_count_", "2022-07-26", "0.2.0")
@@ -101,6 +107,8 @@ stat_count_ <- function(
   assert_is_arg_by(by, assertion_type = assertion_type)
   assert_is_arg_subset(subset, nrow(x), assertion_type = assertion_type)
   assert_is_arg_subset_style(subset_style, assertion_type = assertion_type)
+  assert_is_arg_melt(melt, allowed_col_nms = names(x),
+                     assertion_type = assertion_type)
 
   dt <- stat_expr_(
     x = x,
@@ -110,6 +118,7 @@ stat_count_ <- function(
     subset_style = subset_style,
     assertion_type = "prod_input"
   )
+  dt <- melt_sum(dt = dt, melt = melt)
   return(dt[])
 }
 
@@ -119,18 +128,34 @@ stat_count_ <- function(
 #' @param unique_by `[character]` (mandatory, no default)
 #'
 #' names of columns in `x`; unique combinations of these columns are counted;
-#' e.g. `unique_by = "my_subject_id"` to count numbers of subjects by strata
+#' e.g. `unique_by = "my_subject_id"` to count numbers of subjects by strata;
+#' note that this causes each thing to be counted zero or one
+#' times in each stratum separately --- so e.g. the same person can appear
+#' once in multiple strata; see **Examples**
 #' @details
 #' - `stat_unique_count` produces the number of unique combinations of columns
 #'   defined in `unique_by`; e.g. the number of unique subjects by strata;
 #'   this function is intended to be used directly by the end-user
 #' @export
+#' @examples
+#'
+#' # basicepistats::stat_unique_count
+#' dt <- data.table::data.table(id = c(1, 1, 2), grp = 1:3)
+#' observed <- basicepistats::stat_unique_count(
+#'   x = dt,
+#'   unique_by = "id",
+#'   by = "grp"
+#' )
+#' expected <- data.table::data.table(grp = 1:3, N = 1L, key = "grp")
+#' stopifnot(all.equal(observed, expected, check.attributes = FALSE))
+#'
 stat_unique_count <- function(
   x,
   unique_by,
   by = NULL,
   subset = NULL,
   subset_style = c("zeros", "drop")[1],
+  melt = NULL,
   assertion_type = "input"
 ) {
   # @codedoc_comment_block news("basicepistats::stat_unique_count", "2022-07-26", "0.2.0")
@@ -150,6 +175,9 @@ stat_unique_count <- function(
     required_names = unique_by,
     assertion_type = assertion_type
   )
+  assert_is_arg_melt(melt, allowed_col_nms = names(x),
+                     assertion_type = assertion_type)
+
   dt <- stat_unique_count_(
     x = x,
     unique_by = unique_by,
@@ -158,14 +186,11 @@ stat_unique_count <- function(
     subset_style = subset_style,
     assertion_type = "prod_input"
   )
+  dt <- melt_sum(dt = dt, melt = melt)
   return(dt[])
 }
 
 #' @rdname counts
-#' @param unique_by `[character]` (mandatory, no default)
-#'
-#' names of columns in `x`; unique combinations of these columns are counted;
-#' e.g. `unique_by = "my_subject_id"` to count numbers of subjects by strata
 #' @details
 #' - `stat_unique_count_` produces the number of unique combinations of columns
 #'   defined in `unique_by`; e.g. the number of unique subjects by strata;
@@ -177,6 +202,7 @@ stat_unique_count_ <- function(
   by = NULL,
   subset = NULL,
   subset_style = c("zeros", "drop")[1],
+  melt = NULL,
   assertion_type = "prod_input"
 ) {
   # @codedoc_comment_block news("basicepistats::stat_unique_count_", "2022-07-26", "0.2.0")
@@ -195,6 +221,9 @@ stat_unique_count_ <- function(
     required_names = unique_by,
     assertion_type = assertion_type
   )
+  assert_is_arg_melt(melt, allowed_col_nms = names(x),
+                     assertion_type = assertion_type)
+
   dt <- stat_expr_(
     x = x,
     expr = substitute(
@@ -206,6 +235,7 @@ stat_unique_count_ <- function(
     subset_style = subset_style,
     assertion_type = "prod_input"
   )
+  dt <- melt_sum(dt = dt, melt = melt)
   return(dt[])
 }
 

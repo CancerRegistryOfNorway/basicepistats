@@ -13,6 +13,7 @@ stat_count(
   by = NULL,
   subset = NULL,
   subset_style = c("zeros", "drop")[1],
+  melt = NULL,
   assertion_type = "user_input"
 )
 
@@ -21,6 +22,7 @@ stat_count_(
   by = NULL,
   subset = NULL,
   subset_style = c("zeros", "drop")[1],
+  melt = NULL,
   assertion_type = "prod_input"
 )
 
@@ -30,6 +32,7 @@ stat_unique_count(
   by = NULL,
   subset = NULL,
   subset_style = c("zeros", "drop")[1],
+  melt = NULL,
   assertion_type = "input"
 )
 
@@ -39,6 +42,7 @@ stat_unique_count_(
   by = NULL,
   subset = NULL,
   subset_style = c("zeros", "drop")[1],
+  melt = NULL,
   assertion_type = "prod_input"
 )
 }
@@ -80,6 +84,21 @@ will have zero counts
 (zero counts are impossible)
 }}
 
+\item{melt}{\verb{[NULL, list]} (default \code{NULL})
+
+You may use this argument to easily melt
+(see \verb{[data.table::melt.data.table]}) stratifying columns of your choice.
+E.g. \code{list(area = c("area_1", "area_2"))} to combine to area columns into
+one.
+
+The table is re-aggregated if any melting is performed by summing the
+value columns. This avoids duplicated strata in the table.
+\itemize{
+\item \code{NULL}: No melting performed.
+\item \code{list}: List of one or more elements, where each element is a character
+string vector of column names existing in the table.
+}}
+
 \item{assertion_type}{\verb{[character]}
 
 Passed to one or more assertions. See e.g. \verb{[dbc::report_to_assertion]}.}
@@ -87,7 +106,10 @@ Passed to one or more assertions. See e.g. \verb{[dbc::report_to_assertion]}.}
 \item{unique_by}{\verb{[character]} (mandatory, no default)
 
 names of columns in \code{x}; unique combinations of these columns are counted;
-e.g. \code{unique_by = "my_subject_id"} to count numbers of subjects by strata}
+e.g. \code{unique_by = "my_subject_id"} to count numbers of subjects by strata;
+note that this causes each thing to be counted zero or one
+times in each stratum separately --- so e.g. the same person can appear
+once in multiple strata; see \strong{Examples}}
 }
 \description{
 Produce a stratified count table.
@@ -142,4 +164,15 @@ stat_count(
   x = my_dataset,
   by = list(sex = 1:2, area = area_sls)
 )
+
+# basicepistats::stat_unique_count
+dt <- data.table::data.table(id = c(1, 1, 2), grp = 1:3)
+observed <- basicepistats::stat_unique_count(
+  x = dt,
+  unique_by = "id",
+  by = "grp"
+)
+expected <- data.table::data.table(grp = 1:3, N = 1L, key = "grp")
+stopifnot(all.equal(observed, expected, check.attributes = FALSE))
+
 }
