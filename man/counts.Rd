@@ -138,32 +138,48 @@ this function is intended to be used inside other functions
 }
 }
 \examples{
+
+# basicepistats::stat_count
 library("data.table")
-sls <- data.table::CJ(sex = 1:2, area_2 = 1:5)
+sls <- data.table::CJ(sex = 1:2, area_2 = c(11L, 12L, 13L, 21L, 22L))
 area_sls <- data.table::data.table(
-   area_1 = c(1L, 1L, 1L, 2L, 2L), area_2 = 1:5
+   area_1 = c(10L, 10L, 10L, 20L, 20L),
+   area_2 = c(11L, 12L, 13L, 21L, 22L)
 )
 sls <- merge(sls, area_sls, by = "area_2")
 data.table::setcolorder(sls, c("sex", "area_1", "area_2"))
+data.table::setkeyv(sls, names(sls))
 
 my_dataset <- data.table::data.table(
    sex = 1L,
-   area_1 = 1L,
-   area_2 = 1L
+   area_1 = 10L,
+   area_2 = 11L
 )
 
-stat_count(
+basicepistats::stat_count(
   x = my_dataset,
   by = sls
 )
-stat_count(
+basicepistats::stat_count(
   x = my_dataset,
-  by = list(sex = 1:2, area_1 = 1:2)
+  by = list(sex = 1:2, area_1 = c(10L, 20L))
 )
-stat_count(
+basicepistats::stat_count(
   x = my_dataset,
   by = list(sex = 1:2, area = area_sls)
 )
+
+## melt
+observed <- basicepistats::stat_count(
+  x = my_dataset,
+  by = sls,
+  melt = list(area = c("area_1", "area_2"))
+)
+stopifnot(
+  observed[["N"]][observed[["area"]] == 1 & observed[["area"]] == 10L] == 1,
+  observed[["N"]][observed[["area"]] == 1 & observed[["area"]] == 11L] == 1
+)
+
 
 # basicepistats::stat_unique_count
 dt <- data.table::data.table(id = c(1, 1, 2), grp = 1:3)
