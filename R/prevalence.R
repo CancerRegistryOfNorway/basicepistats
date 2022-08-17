@@ -239,18 +239,17 @@ stat_prevalence_count <- function(
   all_col_nms <- c(nonvalue_col_nms, "N")
   data.table::setcolorder(count_dt, all_col_nms)
   data.table::setkeyv(count_dt, nonvalue_col_nms)
-  basicepistats::stat_table_set(
-    x = count_dt,
-    stratum_col_nms = nonvalue_col_nms,
-    value_col_nms = "N"
-  )
-  count_dt <- melt_sum(count_dt, melt = melt)
   N <- NULL # to appease R CMD CHECK
   count_dt[
     j = "N" := cumsum(N),
     by = eval(setdiff(nonvalue_col_nms, "time_since_entry"))
   ]
   data.table::setnames(count_dt, entry_time_col_nm, "time_of_observation")
+  basicepistats::stat_table_set(
+    x = count_dt,
+    stratum_col_nms = setdiff(names(count_dt), "N"),
+    value_col_nms = "N"
+  )
   return(count_dt[])
 }
 
