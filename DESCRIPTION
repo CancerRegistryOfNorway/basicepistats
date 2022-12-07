@@ -9,7 +9,7 @@ Description: Includes functions for computing case counts, prevalence counts,
 Imports: 
     data.table, 
     dbc (>= 0.3.37)
-License: MIT + file LICENSE
+License: file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.2
