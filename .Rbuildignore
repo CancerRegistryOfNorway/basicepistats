@@ -4,3 +4,4 @@
 ^man-roxygen$
 ^Rplots\.pdf$
 ^data-raw$
+^.+[.]code-workspace$
