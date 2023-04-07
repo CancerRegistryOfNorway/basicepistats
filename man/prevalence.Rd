@@ -124,20 +124,28 @@ conditioning on time since event at the time points.
 }
 \details{
 The following logic determines whether a record is prevalent at a specific
-observation time point:\preformatted{entry_time <= observation_time_point < entry_time + follow_up_time
-}
+observation time point:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{entry_time <= observation_time_point < entry_time + follow_up_time
+}\if{html}{\out{</div>}}
 
 Additionally, a record's entry to follow-up occurred no more than some
-specified time ago if\preformatted{(observation_time_point - entry_time) < follow_up_time_window_width
-}
+specified time ago if
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{(observation_time_point - entry_time) < follow_up_time_window_width
+}\if{html}{\out{</div>}}
 
 Therefore, e.g. the number of prevalent cases that entered follow-up no more
 than 5 years ago from the time sligthly before midnight 1999-12-31 can be
-found using fractional years data by\preformatted{entry_time <= 1999.9999 < entry_time + follow_up_time
-}
+found using fractional years data by
 
-and\preformatted{1999.9999 - entry_time < 5.0
-}
+\if{html}{\out{<div class="sourceCode">}}\preformatted{entry_time <= 1999.9999 < entry_time + follow_up_time
+}\if{html}{\out{</div>}}
+
+and
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{1999.9999 - entry_time < 5.0
+}\if{html}{\out{</div>}}
 
 \itemize{
 \item \code{stat_prevalent_record_count}: counts record prevalence; if one subject

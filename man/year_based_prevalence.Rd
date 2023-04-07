@@ -143,13 +143,17 @@ Compute prevalent records and subjects using only year-level information.
 }
 \details{
 The following logic determines whether a record is prevalent at a specific
-observation year:\preformatted{entry_year <= observation_year < exit_year
-}
+observation year:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{entry_year <= observation_year < exit_year
+}\if{html}{\out{</div>}}
 
 Additionally, e.g. one-year prevalence is computed by supplying
 \code{maximum_follow_up_years = 1L}. To generalise, an observation belongs to
-the n-year prevalence group if\preformatted{(observation_year - entry_year) < n
-}
+the n-year prevalence group if
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{(observation_year - entry_year) < n
+}\if{html}{\out{</div>}}
 
 Therefore, e.g. an observation is in the one-year prevalence group if
 \code{observation_year - entry_year  < 1}, e.g. \code{2020 - 2020 = 0 < 1}.
