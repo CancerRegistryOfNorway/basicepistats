@@ -11,7 +11,7 @@ and other routine epidemiological statistics.
 \section{News}{
 
 \subsection{News for version 0.2.1}{
-\subsection{Object basicepistats::stat_expr_ news:}{
+\subsection{basicepistats::stat_expr_}{
 
 \code{basicepistats::stat_expr_} fix: refer to \code{uniqueN} with
 \code{data.table::uniqueN}. Now \code{data.table} need not be loaded with
@@ -21,79 +21,79 @@ and other routine epidemiological statistics.
 }
 
 \subsection{News for version 0.2.0}{
-\subsection{Object basicepistats::stat_absolute_risk news:}{
+\subsection{basicepistats::stat_absolute_risk}{
 
 \code{basicepistats::stat_absolute_risk} gains arg
 \code{assertion_type}.
 }
 
-\subsection{Object basicepistats::stat_count news:}{
+\subsection{basicepistats::stat_count}{
 
 \code{basicepistats::stat_count} gains arg
 \code{assertion_type}.
 }
 
-\subsection{Object basicepistats::stat_count_ news:}{
+\subsection{basicepistats::stat_count_}{
 
 \code{basicepistats::stat_count_} gains arg
 \code{assertion_type}.
 }
 
-\subsection{Object basicepistats::stat_expr_ news:}{
+\subsection{basicepistats::stat_expr_}{
 
 \code{basicepistats::stat_expr_} gains arg
 \code{assertion_type}.
 }
 
-\subsection{Object basicepistats::stat_prevalence_count news:}{
+\subsection{basicepistats::stat_prevalence_count}{
 
 \code{basicepistats::stat_prevalence_count} gains arg
 \code{assertion_type}.
 }
 
-\subsection{Object basicepistats::stat_prevalent_record_count news:}{
+\subsection{basicepistats::stat_prevalent_record_count}{
 
 \code{basicepistats::stat_prevalent_record_count} gains arg
 \code{assertion_type}.
 }
 
-\subsection{Object basicepistats::stat_prevalent_subject_count news:}{
+\subsection{basicepistats::stat_prevalent_subject_count}{
 
 \code{basicepistats::stat_prevalent_subject_count} gains arg
 \code{assertion_type}.
 }
 
-\subsection{Object basicepistats::stat_prevalent_subject_count_ news:}{
+\subsection{basicepistats::stat_prevalent_subject_count_}{
 
 \code{basicepistats::stat_prevalent_subject_count_} gains arg
 \code{assertion_type}.
 }
 
-\subsection{Object basicepistats::stat_unique_count news:}{
+\subsection{basicepistats::stat_unique_count}{
 
 \code{basicepistats::stat_unique_count} gains arg
 \code{assertion_type}.
 }
 
-\subsection{Object basicepistats::stat_unique_count_ news:}{
+\subsection{basicepistats::stat_unique_count_}{
 
 \code{basicepistats::stat_unique_count_} gains arg
 \code{assertion_type}.
 }
 
-\subsection{Object basicepistats::stat_year_based_prevalent_record_count news:}{
+\subsection{basicepistats::stat_year_based_prevalent_record_count}{
 
 \code{basicepistats::stat_year_based_prevalent_record_count} gains arg
 \code{assertion_type}.
 }
 
-\subsection{Object basicepistats::stat_year_based_prevalent_subject_count news:}{
+\subsection{basicepistats::stat_year_based_prevalent_subject_count}{
 
 \code{basicepistats::stat_year_based_prevalent_subject_count} gains arg
 \code{assertion_type}.
 }
 
-\subsection{Object basicepistats::stat_year_based_prevalent_subject_count_ news:}{
+\subsection{basicepistats::stat_year_based_prevalent_subject_count_}{
 
 \code{basicepistats::stat_year_based_prevalent_subject_count_} gains arg
 \code{assertion_type}.

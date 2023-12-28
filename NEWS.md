@@ -2,7 +2,7 @@
 
 ## News for version 0.2.1
 
-### Object basicepistats::stat_expr_ news:
+### basicepistats::stat_expr_
 
 `basicepistats::stat_expr_` fix: refer to `uniqueN` with
 `data.table::uniqueN`. Now `data.table` need not be loaded with
@@ -11,67 +11,67 @@
 
 ## News for version 0.2.0
 
-### Object basicepistats::stat_absolute_risk news:
+### basicepistats::stat_absolute_risk
 
 `basicepistats::stat_absolute_risk` gains arg
 `assertion_type`.
 
-### Object basicepistats::stat_count news:
+### basicepistats::stat_count
 
 `basicepistats::stat_count` gains arg
 `assertion_type`.
 
-### Object basicepistats::stat_count_ news:
+### basicepistats::stat_count_
 
 `basicepistats::stat_count_` gains arg
 `assertion_type`.
 
-### Object basicepistats::stat_expr_ news:
+### basicepistats::stat_expr_
 
 `basicepistats::stat_expr_` gains arg
 `assertion_type`.
 
-### Object basicepistats::stat_prevalence_count news:
+### basicepistats::stat_prevalence_count
 
 `basicepistats::stat_prevalence_count` gains arg
 `assertion_type`.
 
-### Object basicepistats::stat_prevalent_record_count news:
+### basicepistats::stat_prevalent_record_count
 
 `basicepistats::stat_prevalent_record_count` gains arg
 `assertion_type`.
 
-### Object basicepistats::stat_prevalent_subject_count news:
+### basicepistats::stat_prevalent_subject_count
 
 `basicepistats::stat_prevalent_subject_count` gains arg
 `assertion_type`.
 
-### Object basicepistats::stat_prevalent_subject_count_ news:
+### basicepistats::stat_prevalent_subject_count_
 
 `basicepistats::stat_prevalent_subject_count_` gains arg
 `assertion_type`.
 
-### Object basicepistats::stat_unique_count news:
+### basicepistats::stat_unique_count
 
 `basicepistats::stat_unique_count` gains arg
 `assertion_type`.
 
-### Object basicepistats::stat_unique_count_ news:
+### basicepistats::stat_unique_count_
 
 `basicepistats::stat_unique_count_` gains arg
 `assertion_type`.
 
-### Object basicepistats::stat_year_based_prevalent_record_count news:
+### basicepistats::stat_year_based_prevalent_record_count
 
 `basicepistats::stat_year_based_prevalent_record_count` gains arg
 `assertion_type`.
 
-### Object basicepistats::stat_year_based_prevalent_subject_count news:
+### basicepistats::stat_year_based_prevalent_subject_count
 
 `basicepistats::stat_year_based_prevalent_subject_count` gains arg
 `assertion_type`.
 
-### Object basicepistats::stat_year_based_prevalent_subject_count_ news:
+### basicepistats::stat_year_based_prevalent_subject_count_
 
 `basicepistats::stat_year_based_prevalent_subject_count_` gains arg
 `assertion_type`.
