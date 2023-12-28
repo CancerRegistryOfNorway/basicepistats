@@ -13,6 +13,9 @@
 NULL
 
 # @codedoc_comment_block R_package_description(basicepistats)
-# Includes functions for computing case counts, prevalence counts,
-# and other routine epidemiological statistics.
+# <!-- badges: start -->
+# [![R-CMD-check](https://github.com/CancerRegistryOfNorway/basicepistats/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/CancerRegistryOfNorway/basicepistats/actions/workflows/R-CMD-check.yaml)
+# <!-- badges: end -->
+#
+# ${utils::packageDescription(pkg = "basicepistats", field = "Description", lib.loc = "..")}
 # @codedoc_comment_block R_package_description(basicepistats)

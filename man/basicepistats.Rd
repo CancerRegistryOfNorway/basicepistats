@@ -5,8 +5,10 @@
 \alias{basicepistats}
 \title{basicepistats}
 \description{
-Includes functions for computing case counts, prevalence counts,
-and other routine epidemiological statistics.
+\href{https://github.com/CancerRegistryOfNorway/basicepistats/actions/workflows/R-CMD-check.yaml}{\if{html}{\figure{https://github.com/CancerRegistryOfNorway/basicepistats/actions/workflows/R-CMD-check.yaml/badge.svg}}}
+
+Includes functions for computing case counts, prevalence
+counts, and other routine epidemiological statistics.
 }
 \section{News}{
 
