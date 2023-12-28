@@ -1,22 +1,24 @@
-Package: basicepistats
 Type: Package
+Package: basicepistats
 Title: Calculate Basic Epidemiological Statistics
 Version: 0.2.3
-Depends: R (>= 4.0.0)
-Authors@R: person("Joonas", "Miettinen", email = "joonas.miettinen@cancer.fi", role = c("aut", "cre"))
-Description: Includes functions for computing case counts, prevalence counts,
-  and other routine epidemiological statistics.
-Imports: 
-    data.table, 
-    dbc (>= 0.3.37)
+Authors@R: 
+    person("Joonas", "Miettinen", , "joonas.miettinen@cancer.fi", role = c("aut", "cre"))
+Description: Includes functions for computing case counts, prevalence
+    counts, and other routine epidemiological statistics.
 License: file LICENSE
+Depends: 
+    R (>= 4.0.0)
+Imports: 
+    data.table,
+    dbc (>= 0.3.37)
+Suggests: 
+    codedoc,
+    testthat (>= 2.1.0)
+Remotes: 
+    github::FinnishCancerRegistry/codedoc,
+    github::FinnishCancerRegistry/dbc
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.2.3
 Roxygen: list(markdown = TRUE)
-Remotes: 
-  github::FinnishCancerRegistry/dbc,
-  github::FinnishCancerRegistry/codedoc
-Suggests: 
-    testthat (>= 2.1.0),
-    codedoc
+RoxygenNote: 7.2.3
