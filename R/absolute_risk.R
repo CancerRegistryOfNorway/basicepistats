@@ -196,7 +196,7 @@ stat_absolute_risk <- function(
       assertion_type = assertion_type
     )
   })
-  dbc::assert_is("length(event_count_col_nms) >= 1L",
+  dbc::assert_is(quote(length(event_count_col_nms) >= 1L),
                  assertion_type = assertion_type)
   # @codedoc_comment_block basicepistats::stat_absolute_risk
   # @param at_risk_time_col_nm `[character]` (no default)

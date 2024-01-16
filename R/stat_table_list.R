@@ -82,7 +82,7 @@ stat_table_list <- function(
 }
 
 stat_table_list_set <- function(x, stat_fun_nms) {
-  dbc::assert_is("length(stat_fun_nms) == nrow(x)",
+  dbc::assert_is(quote(length(stat_fun_nms) == nrow(x)),
                  assertion_type = "input")
   stat_table_list_class_set(x)
   stat_table_list_meta_set(x, stat_fun_nms = stat_fun_nms)
@@ -93,7 +93,7 @@ stat_table_list_meta_get <- function(x) {
   data.table::copy(attr(x, stat_table_list_meta_name()))
 }
 stat_table_list_meta_set <- function(x, stat_fun_nms) {
-  dbc::assert_is("length(stat_fun_nms) == nrow(x)",
+  dbc::assert_is(quote(length(stat_fun_nms) == nrow(x)),
                  assertion_type = "input")
   meta <- data.table::data.table(stat_fun_nm = stat_fun_nms)
   data.table::setattr(x, stat_table_list_meta_name(), meta)

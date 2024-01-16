@@ -23,7 +23,7 @@ assert_is_arg_melt <- function(
         assertion_type = assertion_type
       )
       dbc::assert_is(
-        x = paste0("x$", nm, " %in% ", deparse1(allowed_col_nms)),
+        x = parse(text = paste0("x$", nm, " %in% ", deparse1(allowed_col_nms)))[[1]],
         x_nm = paste0(x_nm, "$", nm, " %in% ", deparse1(allowed_col_nms)),
         assertion_type = assertion_type
       )

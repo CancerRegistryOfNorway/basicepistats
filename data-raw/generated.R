@@ -3,7 +3,7 @@ generated <- local({
   integrate_data <- function(x, y) {
     dbc::assert_is_number_nonNA_vector(x)
     dbc::assert_is_number_nonNA_vector(x)
-    dbc::assert_is("length(x) == length(y)")
+    dbc::assert_is(quote(length(x) == length(y)))
     n <- length(x)
     interval_dt <- data.table::data.table(
       x_diff = x[-1] - x[-n],
