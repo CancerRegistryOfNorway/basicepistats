@@ -16,8 +16,8 @@ Suggests:
     codedoc,
     testthat (>= 2.1.0)
 Remotes: 
-    github::FinnishCancerRegistry/codedoc,
-    github::FinnishCancerRegistry/dbc
+    github::FinnishCancerRegistry/codedoc@release,
+    github::FinnishCancerRegistry/dbc@release
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
