@@ -283,7 +283,7 @@ stat_absolute_risk <- function(
   tmp_col_nm_sets[["unique_id"]] <- col_nm_dt[["tmp"]][
     col_nm_dt[["identifies_unique"]]
   ]
-  dbc::assert_is_data.table_with_required_names(
+  dbc::assert_is_data_table_with_required_names(
     x, required_names = setdiff(col_nm_dt[["x"]], NA_character_),
     assertion_type = assertion_type
   )

@@ -341,7 +341,7 @@ stat_prevalent_subject_count <- function(
   # `assertion_type`.
   # @codedoc_comment_block news("basicepistats::stat_prevalent_subject_count", "2022-07-26", "0.2.0")
 
-  dbc::assert_is_data.table(x, assertion_type = assertion_type)
+  dbc::assert_is_data_table(x, assertion_type = assertion_type)
   dbc::assert_is_character_nonNA_atom(follow_up_time_col_nm,
                                       assertion_type = assertion_type)
   dbc::assert_is_number_nonNA_vector(follow_up_time_window_widths,
@@ -350,7 +350,7 @@ stat_prevalent_subject_count <- function(
                                       assertion_type = assertion_type)
   dbc::assert_is_character_nonNA_atom(entry_time_col_nm,
                                       assertion_type = assertion_type)
-  dbc::assert_is_data.table_with_required_names(
+  dbc::assert_is_data_table_with_required_names(
     x,
     required_names = c(follow_up_time_col_nm, subject_id_col_nm,
                        entry_time_col_nm),
@@ -718,10 +718,10 @@ stat_year_based_prevalent_subject_count <- function(
   # `assertion_type`.
   # @codedoc_comment_block news("basicepistats::stat_year_based_prevalent_subject_count", "2022-07-26", "0.2.0")
 
-  dbc::assert_is_data.table(x)
+  dbc::assert_is_data_table(x)
   dbc::assert_is_character_nonNA_atom(subject_id_col_nm,
                                       assertion_type = assertion_type)
-  dbc::assert_is_data.table_with_required_names(
+  dbc::assert_is_data_table_with_required_names(
     x,
     required_names = c(subject_id_col_nm, entry_year_col_nm, exit_year_col_nm),
     assertion_type = assertion_type

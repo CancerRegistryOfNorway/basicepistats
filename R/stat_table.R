@@ -52,7 +52,7 @@ stat_table_set <- function(
     stratum_col_nms = character(0),
     value_col_nms = character(0)
 ) {
-  dbc::assert_is_data.table(x)
+  dbc::assert_is_data_table(x)
   dbc::assert_is_character_nonNA_vector(stratum_col_nms)
   dbc::assert_is_character_nonNA_vector(value_col_nms)
   dbc::assert_vector_elems_are_in_set(stratum_col_nms, set = names(x))

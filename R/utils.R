@@ -32,7 +32,7 @@ level_space_list_to_level_space_data_table <- function(
       call = this_call,
       funs = list(
         dbc::report_is_NULL,
-        dbc::report_is_data.table,
+        dbc::report_is_data_table,
         dbc::report_is_vector
       )
     )

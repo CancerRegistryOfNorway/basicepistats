@@ -2,6 +2,7 @@
 % Please edit documentation in R/package_basicepistats.R
 \docType{package}
 \name{basicepistats}
+\alias{basicepistats-package}
 \alias{basicepistats}
 \title{basicepistats}
 \description{
@@ -11,6 +12,15 @@ Includes functions for computing case counts, prevalence
 counts, and other routine epidemiological statistics.
 }
 \section{News}{
+
+\subsection{News for version 0.2.4}{
+\subsection{basicepistats}{
+
+Replace all \verb{dbc::assert/report_is_data.table*} with
+\verb{dbc::assert/report_is_data_table*}. No effect on user.
+}
+
+}
 
 \subsection{News for version 0.2.1}{
 \subsection{basicepistats::stat_expr_}{
@@ -104,3 +114,7 @@ counts, and other routine epidemiological statistics.
 }
 }
 
+\author{
+\strong{Maintainer}: Joonas Miettinen \email{joonas.miettinen@cancer.fi}
+
+}
