@@ -48,9 +48,9 @@ stat_table_class_set <- function(x) {
 #' @rdname stat_table
 #' @export
 stat_table_set <- function(
-    x,
-    stratum_col_nms = character(0),
-    value_col_nms = character(0)
+  x,
+  stratum_col_nms = character(0),
+  value_col_nms = character(0)
 ) {
   dbc::assert_is_data_table(x)
   dbc::assert_is_character_nonNA_vector(stratum_col_nms)
@@ -65,9 +65,9 @@ stat_table_set <- function(
 #' @rdname stat_table
 #' @export
 stat_table <- function(
-    x,
-    stratum_col_nms = character(0),
-    value_col_nms = character(0)
+  x,
+  stratum_col_nms = character(0),
+  value_col_nms = character(0)
 ) {
   x <- data.table::copy(x)
   stat_table_set(x, stratum_col_nms, value_col_nms)
@@ -77,9 +77,9 @@ stat_table <- function(
 #' @rdname stat_table
 #' @export
 as.stat_table <- function(
-    x,
-    stratum_col_nms = character(0),
-    value_col_nms = character(0)
+  x,
+  stratum_col_nms = character(0),
+  value_col_nms = character(0)
 ) {
   UseMethod("as.stat_table")
 }
@@ -130,3 +130,63 @@ print.stat_table <- function(x, ...) {
   return(y)
 }
 
+#' @rdname stat_table
+#' @export
+#' @examples
+#'
+#' # basicepistats::setnames
+#' dt <- data.table::CJ(sex = 1:2, agegroup = 1:18)
+#' dt[, "n" := sample(1e3L, .N)]
+#' basicepistats::stat_table_set(dt, stratum_col_nms = c("sex", "agegroup"),
+#'                               value_col_nms = "n")
+#' basicepistats::stat_table_setnames(dt, c("sex", "n"), c("my_sex", "my_n"))
+#' stopifnot(
+#'   c("my_sex", "my_n") %in% names(dt),
+#'   "my_sex" %in% basicepistats::stat_table_meta_get(dt)[["stratum_col_nms"]],
+#'   "my_n" %in% basicepistats::stat_table_meta_get(dt)[["value_col_nms"]]
+#' )
+stat_table_setnames <- function(
+  x,
+  old,
+  new,
+  skip_absent = NULL
+) {
+  # @codedoc_comment_block news("basicepistats::stat_table_setnames", "2025-01-27", "0.2.5")
+  # New function `basicepistats::stat_table_setnames`. Rename columns while
+  # also renaming them in the `stat_table`'s metadata.
+  # @codedoc_comment_block news("basicepistats::stat_table_setnames", "2025-01-27", "0.2.5")
+  if (is.null(skip_absent)) {
+    skip_absent <- formals(data.table::setnames)[["skip_absent"]]
+  }
+  dbc::assert_is_data_table(x)
+  nm_dt <- data.table::data.table(
+    old = names(x)
+  )
+  #' @param new `[character]` (no default)
+  #'
+  #' See `[data.table::setnames]`.
+  #' @param old `[character]` (no default)
+  #'
+  #' See `[data.table::setnames]`.
+  #' @param skip_absent `[NULL, logical]` (default `NULL`)
+  #'
+  #' See `[data.table::setnames]`.
+  #' - `NULL`: Use default defined in `[data.table::setnames]`.
+  #' - `logical`: Use this.
+  meta <- stat_table_meta_get(x)
+  data.table::setnames(x = x, old = old, new = new, skip_absent = skip_absent)
+  nm_dt[j = "new" := names(x)]
+  nm_dt <- nm_dt[nm_dt[["old"]] != nm_dt[["new"]], ]
+  meta <- lapply(meta, function(col_nm_set) {
+    dt <- data.table::setDT(list(col_nm = col_nm_set))
+    i.new <- NULL # for R CMD CHECK.
+    dt[
+      i = nm_dt,
+      on = c(col_nm = "old"),
+      j = "col_nm" := i.new
+    ]
+    dt[["col_nm"]]
+  })
+  stat_table_meta_set(x = x, value = meta)
+  return(x[])
+}

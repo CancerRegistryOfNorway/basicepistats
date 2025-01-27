@@ -13,6 +13,15 @@ counts, and other routine epidemiological statistics.
 }
 \section{News}{
 
+\subsection{News for version 0.2.5}{
+\subsection{basicepistats::stat_table_setnames}{
+
+New function \code{basicepistats::stat_table_setnames}. Rename columns while
+also renaming them in the \code{stat_table}'s metadata.
+}
+
+}
+
 \subsection{News for version 0.2.4}{
 \subsection{basicepistats}{
 

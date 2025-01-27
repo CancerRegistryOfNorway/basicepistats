@@ -8,6 +8,7 @@
 \alias{as.stat_table.data.table}
 \alias{print.stat_table}
 \alias{[.stat_table}
+\alias{stat_table_setnames}
 \title{Stat Tables}
 \usage{
 stat_table_meta_get(x)
@@ -23,6 +24,8 @@ as.stat_table(x, stratum_col_nms = character(0), value_col_nms = character(0))
 \method{print}{stat_table}(x, ...)
 
 \method{[}{stat_table}(x, ...)
+
+stat_table_setnames(x, old, new, skip_absent = NULL)
 }
 \arguments{
 \item{x}{\verb{[R object]} (mandatory, no default)
@@ -43,6 +46,22 @@ names of stratifying columns in \code{x}}
 names of columns in \code{x} containing the actual values (statistics)}
 
 \item{...}{passed to next method (see \code{?"["})}
+
+\item{old}{\verb{[character]} (no default)
+
+See \verb{[data.table::setnames]}.}
+
+\item{new}{\verb{[character]} (no default)
+
+See \verb{[data.table::setnames]}.}
+
+\item{skip_absent}{\verb{[NULL, logical]} (default \code{NULL})
+
+See \verb{[data.table::setnames]}.
+\itemize{
+\item \code{NULL}: Use default defined in \verb{[data.table::setnames]}.
+\item \code{logical}: Use this.
+}}
 }
 \description{
 Class \code{stat_table} methods and functions.
@@ -58,5 +77,17 @@ basicepistats::stat_table_set(dt, stratum_col_nms = c("sex", "agegroup"),
 stopifnot(
   inherits(dt[1:3, ], class(dt)[1]),
   dt[1:3, sum(.SD[[1]]), .SDcols = "sex"] == 3
+)
+
+# basicepistats::setnames
+dt <- data.table::CJ(sex = 1:2, agegroup = 1:18)
+dt[, "n" := sample(1e3L, .N)]
+basicepistats::stat_table_set(dt, stratum_col_nms = c("sex", "agegroup"),
+                              value_col_nms = "n")
+basicepistats::stat_table_setnames(dt, c("sex", "n"), c("my_sex", "my_n"))
+stopifnot(
+  c("my_sex", "my_n") \%in\% names(dt),
+  "my_sex" \%in\% basicepistats::stat_table_meta_get(dt)[["stratum_col_nms"]],
+  "my_n" \%in\% basicepistats::stat_table_meta_get(dt)[["value_col_nms"]]
 )
 }
