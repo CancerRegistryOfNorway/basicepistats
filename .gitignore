@@ -6,3 +6,5 @@ inst/doc
 Rplots.pdf
 *.Rproj
 *.code-workspace
+.radian_history
+sandbox.R
