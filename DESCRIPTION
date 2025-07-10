@@ -17,13 +17,15 @@ Depends:
     R (>= 4.0.0)
 Imports: 
     data.table,
-    dbc (>= 0.3.37)
+    dbc (>= 0.7.1),
+    stabli (>= 0.3.0)
 Suggests: 
     codedoc,
     testthat (>= 2.1.0)
 Remotes: 
     github::FinnishCancerRegistry/codedoc@release,
-    github::FinnishCancerRegistry/dbc@release
+    github::FinnishCancerRegistry/dbc@release,
+    github::FinnishCancerRegistry/stabli@release
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)

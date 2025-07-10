@@ -39,9 +39,9 @@ melt_sum <- function(dt, melt = NULL) {
   if (is.null(melt)) {
     return(dt[])
   }
-  dbc::assert_inherits(dt, required_class = "stat_table")
+  stabli::stat_table_assert(dt)
 
-  dt_meta <- basicepistats::stat_table_meta_get(dt)
+  dt_meta <- stabli::stat_table_meta_get(dt)
   stratum_col_nms <- dt_meta[["stratum_col_nms"]]
 
   for (i in seq_along(melt)) {
@@ -67,10 +67,12 @@ melt_sum <- function(dt, melt = NULL) {
     .SDcols = value_col_nms
   ]
 
-  basicepistats::stat_table_set(
+  stabli::stat_table_set(
     dt,
-    stratum_col_nms = stratum_col_nms,
-    value_col_nms = value_col_nms
+    list(
+      stratum_col_nms = stratum_col_nms,
+      value_col_nms = value_col_nms
+    )
   )
 
   return(dt[])

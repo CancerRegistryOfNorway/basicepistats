@@ -245,10 +245,12 @@ stat_prevalence_count <- function(
     by = eval(setdiff(nonvalue_col_nms, "time_since_entry"))
   ]
   data.table::setnames(count_dt, entry_time_col_nm, "time_of_observation")
-  basicepistats::stat_table_set(
+  stabli::stat_table_set(
     x = count_dt,
-    stratum_col_nms = setdiff(names(count_dt), "N"),
-    value_col_nms = "N"
+    list(
+      stratum_col_nms = setdiff(names(count_dt), "N"),
+      value_col_nms = "N"
+    )
   )
   return(count_dt[])
 }
@@ -526,13 +528,15 @@ stat_year_based_prevalence_count__ <- function(
   all_col_nms <- c(nonvalue_col_nms, "N")
   data.table::setcolorder(output, all_col_nms)
   data.table::setkeyv(output, nonvalue_col_nms)
-  basicepistats::stat_table_set(
+  stabli::stat_table_set(
     x = output,
-    stratum_col_nms = nonvalue_col_nms,
-    value_col_nms = "N"
+    list(
+      stratum_col_nms = nonvalue_col_nms,
+      value_col_nms = "N"
+    )
   )
   output <- melt_sum(output, melt = melt)
-  meta <- basicepistats::stat_table_meta_get(output)
+  meta <- stabli::stat_table_meta_get(output)
   nonvalue_col_nms <- meta[["stratum_col_nms"]]
   output[
     j = "N" := cumsum(.SD[[1L]]),

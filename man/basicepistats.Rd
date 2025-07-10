@@ -13,11 +13,29 @@ counts, and other routine epidemiological statistics.
 }
 \section{News}{
 
-\subsection{News for version 0.2.5}{
-\subsection{basicepistats::stat_table_setnames}{
+\subsection{News for version 0.3.0}{
+\subsection{basicepistats}{
 
-New function \code{basicepistats::stat_table_setnames}. Rename columns while
-also renaming them in the \code{stat_table}'s metadata.
+The following functions migrated to package
+\code{stabli} (https://github.com/finnishCancerRegistry/stabli):
+\itemize{
+\item \code{basicepistats::stat_table_list}
+\item \verb{basicepistats::[.stat_table_list}
+\item \code{basicepistats::print.stat_table_list}
+\item \code{basicepistats::c.stat_table_list}
+\item \code{basicepistats::stat_table_meta_get}
+\item \code{basicepistats::stat_table_set}
+\item \code{basicepistats::stat_table}
+\item \code{basicepistats::as.stat_table}
+\item \code{basicepistats::as.stat_table.data.table}
+\item \code{basicepistats::print.stat_table}
+\item \verb{basicepistats::[.stat_table}
+\item \code{basicepistats::stat_table_setnames}
+\item \code{basicepistats::stat_table_setnames}
+\item \code{basicepistats::stat_table_setnames}
+\item \code{basicepistats::stat_table_setnames}
+\item \code{basicepistats::stat_table_setnames}
+}
 }
 
 }
@@ -124,6 +142,6 @@ Replace all \verb{dbc::assert/report_is_data.table*} with
 }
 
 \author{
-\strong{Maintainer}: Joonas Miettinen \email{joonas.miettinen@cancer.fi}
+\strong{Maintainer}: Joonas Miettinen \email{joonas.miettinen@cancer.fi} (\href{https://orcid.org/0000-0001-8624-6754}{ORCID})
 
 }
