@@ -17,7 +17,7 @@ Depends:
     R (>= 4.0.0)
 Imports: 
     data.table,
-    dbc (>= 0.7.1),
+    dbc (>= 0.8.0),
     stabli (>= 0.3.0)
 Suggests: 
     codedoc,

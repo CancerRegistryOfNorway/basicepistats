@@ -276,8 +276,7 @@ stat_expr_ <- function(
   # @codedoc_comment_block news("basicepistats::stat_expr_", "2022-07-26", "0.2.1")
 
   dbc::assert_is_data_table(x, assertion_type = assertion_type)
-  dbc::assert_has_one_of_classes(expr, classes = c("call", "name"),
-                                 assertion_type = assertion_type)
+  dbc::assert_is_unevaluated_expression(expr, assertion_type = assertion_type)
   assert_is_arg_by(by, assertion_type = assertion_type)
   assert_is_arg_subset(subset, nrow(x), assertion_type = assertion_type)
   assert_is_arg_subset_style(subset_style, assertion_type = assertion_type)
