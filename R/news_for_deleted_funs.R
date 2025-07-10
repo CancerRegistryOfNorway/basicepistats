@@ -14,8 +14,4 @@
 # - `basicepistats::print.stat_table`
 # - `basicepistats::[.stat_table`
 # - `basicepistats::stat_table_setnames`
-# - `basicepistats::stat_table_setnames`
-# - `basicepistats::stat_table_setnames`
-# - `basicepistats::stat_table_setnames`
-# - `basicepistats::stat_table_setnames`
 # @codedoc_comment_block news("basicepistats", "2025-07-10", "0.3.0")

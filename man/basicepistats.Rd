@@ -31,10 +31,6 @@ The following functions migrated to package
 \item \code{basicepistats::print.stat_table}
 \item \verb{basicepistats::[.stat_table}
 \item \code{basicepistats::stat_table_setnames}
-\item \code{basicepistats::stat_table_setnames}
-\item \code{basicepistats::stat_table_setnames}
-\item \code{basicepistats::stat_table_setnames}
-\item \code{basicepistats::stat_table_setnames}
 }
 }
 

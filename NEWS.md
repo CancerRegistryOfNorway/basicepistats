@@ -19,10 +19,6 @@ The following functions migrated to package
 - `basicepistats::print.stat_table`
 - `basicepistats::[.stat_table`
 - `basicepistats::stat_table_setnames`
-- `basicepistats::stat_table_setnames`
-- `basicepistats::stat_table_setnames`
-- `basicepistats::stat_table_setnames`
-- `basicepistats::stat_table_setnames`
 
 
 ## News for version 0.2.4
