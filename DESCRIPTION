@@ -1,7 +1,7 @@
 Type: Package
 Package: basicepistats
 Title: Calculate Basic Epidemiological Statistics
-Version: 0.2.5
+Version: 0.3.0
 Authors@R:
     person("Joonas", "Miettinen", , "joonas.miettinen@cancer.fi", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-8624-6754"))
