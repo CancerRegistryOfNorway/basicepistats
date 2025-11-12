@@ -7,4 +7,4 @@ Rplots.pdf
 *.Rproj
 *.code-workspace
 .radian_history
-sandbox.R
+sandbox*.R
